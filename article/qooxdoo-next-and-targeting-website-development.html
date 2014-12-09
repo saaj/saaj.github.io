@@ -39,7 +39,7 @@
 	  </h2>
 	
 	  <p>Initially, this post was meant to be an open letter to Martin Wittemann, an urge to do not break the only
-robust and consistent JavaScript development environment, in sense of bug #8618 <a class="footnote-reference" href="#id20" id="id1">[1]</a>. How robust and
+robust and consistent JavaScript development environment, in sense of bug #8618 <a class="footnote-reference" href="#id21" id="id1">[1]</a>. How robust and
 consistent? Most importantly it is&nbsp;about:</p>
 <ul class="simple">
 <li>Code structure: modern feature-rich object model with properties, events, interfaces, mixins and more,
@@ -53,11 +53,11 @@ infrastructure, <span class="caps">API</span> documentation, feature&nbsp;detect
 on a silver platter. The codebase is one of the best quality I have ever seen. It is readable,
 comprehensible, possible to extend, and is a huge a knowledge resource per se. And note, I am talking about
 tools and environment, not <span class="caps">UI</span>. Like former Qooxdoo developer, Fabian Jakobs, stated in one of his
-presentations <a class="footnote-reference" href="#id21" id="id2">[2]</a>:</p>
+presentations <a class="footnote-reference" href="#id22" id="id2">[2]</a>:</p>
 <blockquote>
 Don’t just look at the widgets, look at the development tools as well.</blockquote>
-<p>Luckily, as was recently stated in <em>Website fundamentals: next challenges</em> <a class="footnote-reference" href="#id22" id="id3">[3]</a>, the “next” (branch and then a
-separate repo <a class="footnote-reference" href="#id23" id="id4">[4]</a>; later referenced Next) turned out to be a experimental website-oriented fork of Qooxdoo,
+<p>Luckily, as was recently stated in <em>Website fundamentals: next challenges</em> <a class="footnote-reference" href="#id23" id="id3">[3]</a>, the “next” (branch and then a
+separate repo <a class="footnote-reference" href="#id24" id="id4">[4]</a>; later referenced Next) turned out to be a experimental website-oriented fork of Qooxdoo,
 which doesn’t mean to be merged back to Qooxdoo. At least any time soon. Panic is soothed, impending doom
 doesn’t overhang the good times. It’s time to dissect and&nbsp;discuss.</p>
 
@@ -103,7 +103,7 @@ function. So what’s clear, having hard time maintaining this is one of likely&
 </div>
 <div class="section" id="goals">
 <h2>Goals</h2>
-<p>Andreas Ecker wrote in the post <a class="footnote-reference" href="#id22" id="id5">[3]</a>, that they
+<p>Andreas Ecker wrote in the post <a class="footnote-reference" href="#id23" id="id5">[3]</a>, that they
 <em>have been looking into the challenges of a more lightweight,  website-oriented approach to web applications</em>.
 Sounds quite ambiguous and curious at the same time. Lightweight in byte size? Website-oriented in a
 non-widget <span class="caps">UI</span>? At the same time, it sounds as odd as arithmetic approach to differential equations. Then he&nbsp;expanded:</p>
@@ -117,32 +117,32 @@ JavaScript code. So it may be looked at as a “website-oriented approach”. Se
 </div>
 <div class="section" id="qxweb">
 <h2>qxWeb</h2>
-<p>Qooxdoo targets websites since 2.0 which was released in June 2012 <a class="footnote-reference" href="#id24" id="id6">[5]</a>. Initially I was enthusiastic about
+<p>Qooxdoo targets websites since 2.0 which was released in June 2012 <a class="footnote-reference" href="#id25" id="id6">[5]</a>. Initially I was enthusiastic about
 qxWeb, I thought it’ll be another virtue of the framework, and I still think the idea to target websites is
 right as even at mid-scale they benefit from most of Qooxdoo non-<span class="caps">UI</span> features. But the design and development
 of qxWeb seems to me misguided and mostly pointless&nbsp;now.</p>
 <p>A year after qxWeb release, the time I was looking at it from various angles, trying to find its strength and
 way to integrate it in my flow to make it handle infrastructure task I used to handle with Qooxdoo in case of
-web application, I submitted the bug report <a class="footnote-reference" href="#id25" id="id7">[6]</a> that proposes design that enables website development with
-Qooxdoo (native application type <a class="footnote-reference" href="#id33" id="id8">[14]</a>), points qxWeb shortcomings and its possible shortcut-purpose, and the
+web application, I submitted the bug report <a class="footnote-reference" href="#id26" id="id7">[6]</a> that proposes design that enables website development with
+Qooxdoo (native application type <a class="footnote-reference" href="#id34" id="id8">[14]</a>), points qxWeb shortcomings and its possible shortcut-purpose, and the
 problems to be solved for normal operation. The biggest problem with qxWeb is that it wasn’t designed to be a
 Qooxdoo thing, but rather be jQuery with <span class="caps">API</span> done right. Long story told short: it’s not for writing an
 application, it’s for scribbling ad hoc per page scripts. And I would prefer qxWeb over jQuery for writing
 one-off script, but in general jQuery is de facto standard in <span class="caps">DOM</span> patching and I don’t see any significant
 niche for qxWeb as yet another <span class="caps">DOM</span> patcher plus this and that. Moreover even for shortcut-purpose in a
 Qooxdoo application, qxWeb is still an alien, because it needs manual dependency declaration for its
-“modules”. Qooxdoo way of <span class="caps">DOM</span> patching was <tt class="docutils literal">qx.bom.Collection</tt> <a class="footnote-reference" href="#id26" id="id9">[7]</a>, removed in version 3.0. I think it was
+“modules”. Qooxdoo way of <span class="caps">DOM</span> patching was <tt class="docutils literal">qx.bom.Collection</tt> <a class="footnote-reference" href="#id27" id="id9">[7]</a>, removed in version 3.0. I think it was
 a&nbsp;mistake.</p>
-<p>Starting with Qooxdoo 3.5 <a class="footnote-reference" href="#id27" id="id10">[8]</a>, there was an addition to qxWeb. Since then it supported low-level widgets.
+<p>Starting with Qooxdoo 3.5 <a class="footnote-reference" href="#id28" id="id10">[8]</a>, there was an addition to qxWeb. Since then it supported low-level widgets.
 Such widget expects certain <span class="caps">HTML</span> structure and classes, which later is animated on widget instance
 construction. Basically, qxWeb started to mimic jQueryUI as well, not just jQuery. Not that I want to say
 it’s useless, but rather it’s reinvention of the wheel, reimplementation of a task that was already
 implemented long ago, and all who wanted such functionality already have it at hand. What’s worse the
-reimplementation is being done with outdated technology. <span class="caps">DOM</span> binding, <span class="caps">MVVM</span> <a class="footnote-reference" href="#id28" id="id11">[9]</a>, libraries emerged in
+reimplementation is being done with outdated technology. <span class="caps">DOM</span> binding, <span class="caps">MVVM</span> <a class="footnote-reference" href="#id29" id="id11">[9]</a>, libraries emerged in
 2009-2010, and at the moment of Qooxdoo 3.5 release, late 2013, were a commodity, as well as understanding
-that a lot of manual <span class="caps">DOM</span> patching is a chore, that can be automated with a view model. Bug #8101 <a class="footnote-reference" href="#id29" id="id12">[10]</a> lead
-me to working KnockoutJS <a class="footnote-reference" href="#id30" id="id13">[11]</a> adapter for Qooxdoo, but at the framework side it didn’t gain traction, except
-that Martin confirmed importance of the topic, and that also it’s the topic of his master thesis <a class="footnote-reference" href="#id31" id="id14">[12]</a>.</p>
+that a lot of manual <span class="caps">DOM</span> patching is a chore, that can be automated with a view model. Bug #8101 <a class="footnote-reference" href="#id30" id="id12">[10]</a> lead
+me to working KnockoutJS <a class="footnote-reference" href="#id31" id="id13">[11]</a> adapter for Qooxdoo, but at the framework side it didn’t gain traction, except
+that Martin confirmed importance of the topic, and that also it’s the topic of his master thesis <a class="footnote-reference" href="#id32" id="id14">[12]</a>.</p>
 <p>I want to summarise this section quoting Martin’s <em>focus on our strengths</em>. How the whole thing looks to me
 now, is that in area of website development Qooxdoo team tries to avoid its strengths at all costs. No build
 tools, no view model, no application design having great tools, data layer and application design experience.
@@ -152,8 +152,8 @@ Instead Qooxdoo team is toying a&nbsp;jQuery/jQueryUI.</p>
 <h2>A Qooxdoo website&nbsp;today</h2>
 <p>Even though initial changes in Next doesn’t seem anything promising, I’m interested what the experiment may
 yield. But to address the need of a robust development environment for a website today I want to point again
-to the bug #7481 <a class="footnote-reference" href="#id25" id="id15">[6]</a> and its proof of concept project <a class="footnote-reference" href="#id32" id="id16">[13]</a>.</p>
-<p>Eventually all blocking bugs for #7481 were resolved and a Qooxdoo native application <a class="footnote-reference" href="#id33" id="id17">[14]</a> since 3.5.1 was
+to the bug #7481 <a class="footnote-reference" href="#id26" id="id15">[6]</a> and its proof of concept project <a class="footnote-reference" href="#id33" id="id16">[13]</a>.</p>
+<p>Eventually all blocking bugs for #7481 were resolved and a Qooxdoo native application <a class="footnote-reference" href="#id34" id="id17">[14]</a> since 3.5.1 was
 already fine as a basis for a website codebase. From my side I’ve been experimenting with the approach on a
 few real websites and result are good. When all website’s JavaScript code is centralised, it really starts to
 feel like an application, thusly significantly improving maintainability. Late autumn 2014 I’ve written
@@ -233,11 +233,11 @@ feature-size trade-off, then it wouldn’t probably make&nbsp;sense.</p>
 3.5. Before 3.5 I could agree to virtually every decision taken by the team, as there was clear reason,
 argument and pragmatic approach&nbsp;overall.</p>
 <p>Now it’s mixed. There’s still fundamental work like migration to pointer events, but also several other topics
-that look like a waste of time. Like what? Like rewriting the generator to NodeJS and GruntJS <a class="footnote-reference" href="#id34" id="id18">[15]</a>.
+that look like a waste of time. Like what? Like rewriting the generator to NodeJS and GruntJS <a class="footnote-reference" href="#id35" id="id18">[15]</a>.
 Surprise! There’s ongoing shift to gulp.js and GruntJS is no longer cool JavaScript thiggie. And I’m curious
-to see how Qooxdoo team will handle such situations in general. Fancy toys change in the public sandbox fast.
-Will you try to catch up every new cool replacement or will maintain an unpopular&nbsp;one?</p>
-<p>Like, unconditional <span class="caps">RESOLVED</span> <span class="caps">NEVER</span> <a class="footnote-reference" href="#id35" id="id19">[16]</a> set to all old bug. No prioritization, there is no past, the future&#8217;s
+to see how Qooxdoo team will handle such situations in general. Fancy toys change in the public sandbox fast
+<a class="footnote-reference" href="#id37" id="id19">[17]</a>. Will you try to catch up every new cool replacement or will maintain an unpopular&nbsp;one?</p>
+<p>Like, unconditional <span class="caps">RESOLVED</span> <span class="caps">NEVER</span> <a class="footnote-reference" href="#id36" id="id20">[16]</a> set to all old bug. No prioritization, there is no past, the future&#8217;s
 so bright. The team briefly state something about turning to an agile development, and happily turned to
 developing new features. And of course, no doubt developing features is fun, <span class="caps">PR</span> is easier with less open
 bugs, and resources are always limited. But when new developers stumble the same bugs again and re-report
@@ -258,100 +258,106 @@ value design and maintainability. Please, keep on avoiding us from it.</blockquo
 <p>That is to say. I’m an optimist, and there’s nothing parallel to Qooxdoo. So I hope the team won’t forget its
 strengths and its users, and will keep on the path of solving real&nbsp;problems.</p>
 <hr class="docutils" />
-<table class="docutils footnote" frame="void" id="id20" rules="none">
+<table class="docutils footnote" frame="void" id="id21" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=8618">http://bugzilla.qooxdoo.org/show_bug.cgi?id=8618</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id21" rules="none">
+<table class="docutils footnote" frame="void" id="id22" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="http://www.slideshare.net/fjakobs/masterin-large-scale-java-script-applications">http://www.slideshare.net/fjakobs/masterin-large-scale-java-script-applications</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id22" rules="none">
+<table class="docutils footnote" frame="void" id="id23" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label">[3]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id5">2</a>)</em> <a class="reference external" href="http://news.qooxdoo.org/website-fundamentals-next-challenges">http://news.qooxdoo.org/website-fundamentals-next-challenges</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id23" rules="none">
+<table class="docutils footnote" frame="void" id="id24" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id4">[4]</a></td><td><a class="reference external" href="http://github.com/qooxdoo/next">http://github.com/qooxdoo/next</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id24" rules="none">
+<table class="docutils footnote" frame="void" id="id25" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id6">[5]</a></td><td><a class="reference external" href="http://news.qooxdoo.org/qooxdoo-2-0-released">http://news.qooxdoo.org/qooxdoo-2-0-released</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id25" rules="none">
+<table class="docutils footnote" frame="void" id="id26" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label">[6]</td><td><em>(<a class="fn-backref" href="#id7">1</a>, <a class="fn-backref" href="#id15">2</a>)</em> <a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=7481">http://bugzilla.qooxdoo.org/show_bug.cgi?id=7481</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id26" rules="none">
+<table class="docutils footnote" frame="void" id="id27" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id9">[7]</a></td><td><a class="reference external" href="http://demo.qooxdoo.org/2.0.4/apiviewer/#qx.bom.Collection">http://demo.qooxdoo.org/2.0.4/apiviewer/#qx.bom.Collection</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id27" rules="none">
+<table class="docutils footnote" frame="void" id="id28" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id10">[8]</a></td><td><a class="reference external" href="http://news.qooxdoo.org/qooxdoo-3-5-released">http://news.qooxdoo.org/qooxdoo-3-5-released</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id28" rules="none">
+<table class="docutils footnote" frame="void" id="id29" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id11">[9]</a></td><td><a class="reference external" href="http://en.wikipedia.org/wiki/Model_View_ViewModel">http://en.wikipedia.org/wiki/Model_View_ViewModel</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id29" rules="none">
+<table class="docutils footnote" frame="void" id="id30" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id12">[10]</a></td><td><a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=8101">http://bugzilla.qooxdoo.org/show_bug.cgi?id=8101</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id30" rules="none">
+<table class="docutils footnote" frame="void" id="id31" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id13">[11]</a></td><td><a class="reference external" href="http://knockoutjs.com/">http://knockoutjs.com/</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id31" rules="none">
+<table class="docutils footnote" frame="void" id="id32" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id14">[12]</a></td><td><a class="reference external" href="http://www.slideshare.net/wittemann/data-binding-in-qooxdoo">http://www.slideshare.net/wittemann/data-binding-in-qooxdoo</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id32" rules="none">
+<table class="docutils footnote" frame="void" id="id33" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id16">[13]</a></td><td><a class="reference external" href="http://code.google.com/p/qooxdoo-website-skeleton/">http://code.google.com/p/qooxdoo-website-skeleton/</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id33" rules="none">
+<table class="docutils footnote" frame="void" id="id34" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label">[14]</td><td><em>(<a class="fn-backref" href="#id8">1</a>, <a class="fn-backref" href="#id17">2</a>)</em> <a class="reference external" href="http://manual.qooxdoo.org/3.5.1/pages/development/skeletons.html#native">http://manual.qooxdoo.org/3.5.1/pages/development/skeletons.html#native</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id34" rules="none">
+<table class="docutils footnote" frame="void" id="id35" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
 <tr><td class="label"><a class="fn-backref" href="#id18">[15]</a></td><td><a class="reference external" href="http://news.qooxdoo.org/tool-chain-the-next-step">http://news.qooxdoo.org/tool-chain-the-next-step</a></td></tr>
 </tbody>
 </table>
-<table class="docutils footnote" frame="void" id="id35" rules="none">
+<table class="docutils footnote" frame="void" id="id36" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id19">[16]</a></td><td><a class="reference external" href="http://www.eclipsezone.com/eclipse/forums/t83053.html">http://www.eclipsezone.com/eclipse/forums/t83053.html</a></td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id20">[16]</a></td><td><a class="reference external" href="http://www.eclipsezone.com/eclipse/forums/t83053.html">http://www.eclipsezone.com/eclipse/forums/t83053.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id37" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id19">[17]</a></td><td><a class="reference external" href="http://readwrite.com/2014/12/04/node-js-fork-io-js">http://readwrite.com/2014/12/04/node-js-fork-io-js</a></td></tr>
 </tbody>
 </table>
 </div>
