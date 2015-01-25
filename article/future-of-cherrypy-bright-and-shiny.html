@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Recollection &middot; Future of CherryPy: bright and&nbsp;shiny?</title>
+  <link rel="shortcut icon" href="/favicon.ico" />
+    <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Recollection Atom Feed" />
+  <link rel="stylesheet" href="/theme/css/screen.css" type="text/css" />
+  <link rel="stylesheet" href="/theme/css/pygments.css" type="text/css" />
+
+
+
+    <meta name="tags" content="cherrypy" />
+    <meta name="tags" content="python" />
+    <meta name="tags" content="future" />
+</head>
+<body>
+  <div id="header">
+    <div id="nav">      <div>
+        <a href="/">Home</a>
+      </div>
+      <div>
+        <a href="https://code.google.com/u/111842620381950743304">Code</a>
+      </div>
+      <div>
+        <a href="/archive.html">Archive</a>
+      </div>
+    </div>
+    <div class="header-box">
+        <h1><a href="/">Recollection</a></h1>
+    </div>
+  </div>
+  <div id="wrapper">
+    <div id="content">	  <h4 class="date">Jan 25, 2015</h4>	
+	<div class="post">
+<h2 class="title">
+	    <a href="/article/future-of-cherrypy-bright-and-shiny.html" rel="bookmark" title="Permanent Link to Future of CherryPy: bright and&nbsp;shiny?">
+	      Future of CherryPy: bright and&nbsp;shiny?
+	    </a>
+	  </h2>
+	
+	  <p>First off, I really hope so, tough at the same time I see the reasons for it. Moreover
+I have been trying to contribute back to the community by giving knowledge that could hopefully
+cut the rough edges that I’ve met on my way of learning and employing CherryPy <a class="footnote-reference" href="#id29" id="id1">[1]</a>. And when
+CherryPy is calling, I have something to&nbsp;say.</p>
+<p>This article is my consideration in reply to the holiday post <a class="footnote-reference" href="#id30" id="id2">[2]</a> by Sylvain Hellegouarch
+in CherryPy user group about its current state and future, which recalls to older big
+discussion <a class="footnote-reference" href="#id31" id="id3">[3]</a> about the status of development of&nbsp;CherryPy.</p>
+
+<div class="section" id="acquisition">
+<h2>Acquisition</h2>
+<p>My CherryPy experience started in beginning of 2011. I had a chance to jump ship to Python
+web application development and I didn’t lose it. At that moment I had years of web development
+experience, so I was looking for the certain piece of software. If I would start this search
+today, most of the front page titles are the same. The same <em>you don&#8217;t have to be the best to
+be popular</em> still applies to the very domain of Python&nbsp;application.</p>
+<p>I&#8217;ve spent a couple of weeks reading the web: reviews, comparisons, benchmarks <a class="footnote-reference" href="#id32" id="id4">[4]</a> and
+StackOverflow <a class="footnote-reference" href="#id33" id="id5">[5]</a>. And I have to admit that there are paths for newcomers to CherryPy,
+who look for stable, fast, well-designed and pythonic <span class="caps">HTTP</span> framework with its own Zen <a class="footnote-reference" href="#id34" id="id6">[6]</a>
+(like Python itself <a class="footnote-reference" href="#id35" id="id7">[7]</a>), that doesn&#8217;t dictate application design, nor what tools to use,
+but rather provides structure, testability and primitives that help code&nbsp;scale.</p>
+</div>
+<div class="section" id="scope">
+<h2>Scope</h2>
+<p>Where CherryPy stands? I think it perfectly stands as a Python <span class="caps">HTTP</span> application server. It
+allows a developer to write a genuine Python code, use the best from the Cheese Shop,
+design applications in whatever desired way (but with restrictions of threaded execution&nbsp;model).</p>
+<div class="section" id="self-contained-packages">
+<h3>Self-contained&nbsp;packages</h3>
+<p>I agree that stable pure-Python <span class="caps">HTTP</span> server is one of major features of CherryPy. Because
+basically, in most cases one can just forget about <span class="caps">WSGI</span>, and use good old <span class="caps">HTTP</span> — bare CherryPy or
+behind reverse-proxy like nginx. Less intermediaries means less problems as it simplifies
+development and deployment. However, I don&#8217;t think it&#8217;s an additive feature. If you extract the
+web-server into a stand-alone package, be it named Cheroot or something else, it won&#8217;t be as
+valuable for application development. If there are other frameworks&#8217; users who host their <span class="caps">WSGI</span>
+applications with CherryPy, it&#8217;s their problem of deployment and of these framework&#8217;s authors.
+This usage is ultimately a byproduct of CherryPy&#8217;s <span class="caps">WSGI</span> compliance and stability, and let it
+stay&nbsp;so.</p>
+<p>On the other hand, as the questions risen in the post are mostly about the cost of CherryPy
+maintenance, if the increased modularity will help to reduce it, then it surely makes sense.
+But the extraction also has its cost, and if the code of target functionality is tightly coupled
+with the rest of the codebase, then benefits of extraction should clearly outweigh its cost.
+At least inner-package refactoring towards more encapsulated components is possible with the
+almost the same&nbsp;benefits.</p>
+</div>
+<div class="section" id="implementation-support">
+<h3>Implementation&nbsp;support</h3>
+<p>Regarding supported Python implementation official website says: <em>Python 2.5+, 3.1+, PyPy, Jython
+and Android</em>. Documentation says: <em>CPython, IronPython, Jython and PyPy</em> and <em>CherryPy supports
+Python 2.3 through to 3.4.</em>. There&#8217;s no need to say about official distribution, CPython, but its
+versions are in question. There&#8217;s a lot compatibility code for old Python versions in CherryPy,
+which can be shrunk by lifting the bar closer to actual ones. I don&#8217;t think the move is for 3.x
+series, but for CherryPy 4, CPython 2.7 and 3.3+ are fine. This is a real way to make the codebase
+cleaner, smaller and fun to deal with&nbsp;again.</p>
+<p>PyPy is constantly taking more ground and is supported by many libraries that also grow in
+number. However I can&#8217;t get many real use-cases out of my head (if we don&#8217;t actually include the
+case of a long task which should be run in background, but is run synchronously as an effort
+tradeoff and assuming it can benefit from <span class="caps">JIT</span>), nor do I know if there&#8217;s <span class="caps">CPU</span>-bound hot CherryPy
+code. Mostly I feel it&#8217;s a cool-factor, but with possible real use-cases. So I think it&#8217;s a good
+idea to keep it. The problem with supporting PyPy is its garbage collectors. They aren&#8217;t based on
+reference counting, thus file handles, sockets and everything that was able to close itself
+passing out of the execution scope with zero references on CPython, won&#8217;t deterministically keep
+doing it on PyPy. It makes more strict demands on code to keep it memory-leak free. Python3&#8217;s
+<tt class="docutils literal">ResourceWarning</tt> can help with it. I left a bug report <a class="footnote-reference" href="#id36" id="id8">[8]</a> about the subject once when I was
+porting a CherryPy-based library to&nbsp;Python3.</p>
+<p>The rest is more questionable. CherryPy running on Android is clearly a cool-factor.
+<span class="caps">SL4A</span> with Python isn&#8217;t straightforward to install, and even though there&#8217;s complete
+CPython 2.6, it barely has a single real use-case. There&#8217;s file <span class="caps">API</span>, SQLite and the rest
+important things we use server-side for, for PhoneGap and the like, for ones who write <span class="caps">HTML5</span>
+application. There&#8217;s Kivy with established deployment. The same way I feel of Jython and
+IronPython support. I no idea if anyone is actually using CherryPy on them, but having them
+officially supported complicates things. Testing, debugging, developing the framework. I think
+these highly specific environments should be covered by enthusiasts, if there&#8217;re any out there,
+who deal with them. If there&#8217;s a bug, say for Jython, it should be treated as enhancement and
+fixed only if the fix doesn&#8217;t impede design, performance and maintainability of primary
+implementations&#8217; code. I think guarantees and according measures are needed, so it&#8217;s clear
+what is officially supported by CherryPy, and what it may run&nbsp;on.</p>
+</div>
+<div class="section" id="to-depend-or-not-to">
+<h3>To depend or not&nbsp;to</h3>
+<p>For an application it is perfectly fine to depend on as many libraries to delegate as most
+out-of-domain functionality away from its codebase. Conversely for a library it&#8217;s not as good
+idea. There&#8217;s a functional difference between a library and a framework, but for current form
+of CherryPy these terms feel&nbsp;interchangeable.</p>
+<p>For a library having no dependencies is a feature when general <em>less moving parts, less issues</em>
+applies. It may relate to broken, abandoned, license-changed 3rd-party dependencies. It may be
+incompatible changes, or used C-modules which complicate installation and use in PyPy and other
+implementations and platforms. Thus as CherryPy has grown its own pure-Python internals which
+are fast and stable, I think there&#8217;s no point in abandoning&nbsp;them.</p>
+</div>
+<div class="section" id="hype-fuss-and-choices">
+<h3>Hype, fuss and&nbsp;choices</h3>
+<p>Last, but not least thing I want to note about the scope of CherryPy is its technology choice.
+<span class="caps">WSGI</span> is good example here. From inception it likely was a cool thing in Python. <span class="caps">WSGI</span> here
+and <span class="caps">WSGI</span> there, standards, uniformity and stuff. And then, a little later&#8230; oops, a synchronous
+protocol. No WebSockets, no <span class="caps">SSE</span>, no other close to real-time techniques. This choice affects, for
+example things like django-sse <a class="footnote-reference" href="#id37" id="id9">[9]</a> and its users <a class="footnote-reference" href="#id38" id="id10">[10]</a> (though this community is strongest in
+seeing everything as a nail). But also PaaS providers like OpenShift <a class="footnote-reference" href="#id39" id="id11">[11]</a>, and probably&nbsp;others.</p>
+<p>That is to say it&#8217;s okay to be compliant (e.g. <span class="caps">WSGI</span>-compliant), but it&#8217;s not okay to be a pliable
+bigot, who praises next cool X at every turn. In that sense I like how CherryPy stands. Simple is
+simple in a threaded server. Real-time stuff needed? Sylvain&#8217;s ws4py <a class="footnote-reference" href="#id40" id="id12">[12]</a> to the rescue.
+Simple background processing? There you go with <tt class="docutils literal">cherrypy.process.plugins.BackgroundTask</tt>.
+So I want to keep seeing CherryPy making conscious and pragmatic technology&nbsp;choices.</p>
+<p>2014 has seen new breed of asynchronous libraries within Python 3.4+ batteries, <tt class="docutils literal">asyncio</tt>. It
+is nice to see co-operative execution in Python finds more expressive language constructs and
+tooling, but apart from its niche uses I suspect it&#8217;ll be next asynchronicity-everywhere craze,
+which will lead to rewrites, new cool stuff and more &quot;pressure&quot; on users of &quot;old&quot; software. At
+least, there&#8217;s no evidence that it can be faster on generic load, as CherryPy is neck and neck
+with Tornado <a class="footnote-reference" href="#id32" id="id13">[4]</a>. There&#8217;s good socket performance notice <a class="footnote-reference" href="#id41" id="id14">[13]</a> in Python documentation which
+also applies generally to such design&nbsp;choice.</p>
+<blockquote>
+<p>There’s no question that the fastest sockets code uses non-blocking sockets and select to
+multiplex them. You can put together something that will saturate a <span class="caps">LAN</span> connection without
+putting any strain on the <span class="caps">CPU</span>. The trouble is that an app written this way can’t do much
+of anything else - it needs to be ready to shuffle bytes around at all&nbsp;times.</p>
+<p>&#8230;</p>
+<p>Finally, remember that even though blocking sockets are somewhat slower than non-blocking,
+in many cases they are the “right” solution. After all, if your app is driven by the data
+it receives over a socket, there’s not much sense in complicating the logic just so your
+app can wait on <tt class="docutils literal">select</tt> instead of <tt class="docutils literal">recv</tt>.</p>
+</blockquote>
+</div>
+</div>
+<div class="section" id="audience">
+<h2>Audience</h2>
+<p>Naturally appreciation comes from the target audience. For a newbie in <span class="caps">HTTP</span> (which is a
+complex protocol by the way) and application development in general, Django may be a blessed
+gift because it helps to meet her goals by answering as many development questions as possible,
+and at the same time for an experienced developer it may seem a worthless bulk of bloatware
+that solves all its tasks equally poor (like all generic solutions, though). The same newbie
+won&#8217;t be able to effectively use CherryPy because it won&#8217;t answer the several dozen of questions
+for&nbsp;her.</p>
+<p>If CherryPy stays CherryPy there can&#8217;t and shoundn&#8217;t be answers for many of them. How to design
+my application? What application directory layout to use? What persistance layer and storage to
+employ? How do I render a template in CherryPy? It&#8217;s all up to you, developer. From my
+experience, reading others&#8217; opinions on the web, and particularly in the user group, there is
+an unanimously opinion that CherryPy&#8217;s barrier to entry is high, but once you wrapped your head
+around its concepts you&#8217;re enlightened and&nbsp;empowered.</p>
+<p>These points lead to two measures of increasing CherryPy user base, and hopefully contributors at
+some proportional rate. First is targeting more specific audience. Examining the main page <a class="footnote-reference" href="#id29" id="id15">[1]</a> it
+is at least not bad. It shows that simple is easy, and gives clues that complex is possible. It
+refers to <em>any other object-oriented Python program</em>, which indicates good <span class="caps">API</span>. But it&#8217;s biased
+opinion, because I look at things in reverse. Is it really that comprehensible for one who is
+making decision at the moment? Is there some real-world CherryPy code that is widely
+considered worth exposing, that is done &quot;right&quot; way and promotes best CherryPy practices? Second
+is means of lowering and alleviating barrier to entry, see <a class="reference internal" href="#improvement">Improvement</a>&nbsp;section.</p>
+<p>A note about code hosting that is supposed to affect the audience. I agree with Konstantin
+Molchanov, that magic pixies&#8230; wait no, the best friend of Ruby and Rails, to the backbone
+awesome, the octocat won&#8217;t make CherryPy popular by the wave of its tentacle. There&#8217;s no outreach
+program nor there&#8217;s traffic charity for newcomers on Github. It&#8217;s a popular code hosting which
+makes it easy to contribute to a Git repository, in case there&#8217;re ones who are willing to. But
+if there are no new contributors, I don&#8217;t see the way it can&nbsp;help.</p>
+<p>Though it may not work in opposite direction, because if there&#8217;s a Python developer willing to
+contribute to a Python project, the developer may expect a Python tool for it, which Git is not.
+I think it&#8217;s a disillusioned and naive idea to turn away from Mercurial to get more Python users.
+At the same time, I cannot disagree with Nic Young that there&#8217;re a few developer services (mostly
+for quality assurance), which are free for open source projects and may be useful for CherryPy
+(e.g. TravisCI is not Git-only, but Github-only because it&#8217;s tied to its <span class="caps">API</span>), albeit none of them
+lack&nbsp;alternatives.</p>
+</div>
+<div class="section" id="part-taken">
+<h2>Part&nbsp;taken</h2>
+<p>A year after I commenced my CherryPy affair one web application project was in production and I
+possessed certain portion of experience. Specifically saying, deployment struggle experience.
+Having <span class="caps">HTTP</span>-only deployment was very helpful, because I could reuse the knowledge I had, but Linux
+part was at most scarce, poorly covered and I was groping for valuable pieces of knowledge all
+over the web. Having mint Debian box how do I make my application continuously deployable? How do
+I make it first-class daemon and run it as <em>www-data</em>? How do I put it behind nginx? How do I
+monitor its memory and <span class="caps">CPU</span> usage? How to restart it if it has crashed? How do I rotate its&nbsp;logs?</p>
+<p>That time I already had the answers, and they were put together and published as tutorial/skeleton
+project <a class="footnote-reference" href="#id42" id="id16">[14]</a>. I felt it was necessary contribution to make. Obviously, it hasn&#8217;t received high
+volume traffic, but qualitatively there&#8217;re constant visits from all over the world (and least from
+the countries where people do <span class="caps">IT</span>), which indicates that CherryPy still attracts new&nbsp;users.</p>
+<p>In mid-2013 I&#8217;ve written another tutorial/skeleton project <a class="footnote-reference" href="#id43" id="id17">[15]</a>, and even though its goal
+is maintainable JavaScript website-like application design, its server-side is CherryPy
+application with real-world template layout for Jina2 and according CherryPy tool. I&#8217;ve found
+time to write documentation for it only in the end of 2014, so it is also an on topic&nbsp;thing.</p>
+<p>In the spring of 2014 I started to participate on StackOverflow&#8217;s CherryPy tag <a class="footnote-reference" href="#id33" id="id18">[5]</a>. It was
+another pay-off kind of thing, because the site was helpful to me, and its CherryPy part
+specifically, but the latter sadly had a lot of unanswered question making it feel a little
+abandoned. In fact many questions are quite interesting dealing with performance, design,
+execution model of CherryPy, so it requires an answerer to have a good grasp of documentation and
+codebase. Besides making other users&#8217; CherryPy experience better, it is fun and cognitive
+activity. It sheds the light on how people really use CherryPy, how they start, where are
+remaining rough edges and what is the room for&nbsp;improvement.</p>
+</div>
+<div class="section" id="improvement">
+<h2>Improvement</h2>
+<p>Inherently I&#8217;m an application guy. I pick out cog-wheels, tune them and make spin together. I
+don&#8217;t work on a library oftentimes, nor do I have much time for it, but because I really value
+CherryPy I want to have a way to do it, in case I have time and idea for improvement or fix. For
+instance, I want to add privilege drop plugin to <tt class="docutils literal">cherryd</tt> and make other minor improvement to&nbsp;it.</p>
+<p>When you file a bug report, you generally expect someone, a core contributor or so, to tell you
+whether it is generally valid or not. Then it may be re-prioritized, assigned to someone or put
+on a shelf to wait its day. Without this initial input it&#8217;s a little confusing. &quot;Okay, no one
+replied. It should be working other way&quot;, — you may think, at&nbsp;best.</p>
+<p>Understanding the flow of one&#8217;s patch to CherryPy codebase is also important. Official site says
+<em>fork CherryPy on BitBucket here and submit pull-request with your modifications</em>. When it&#8217;s a bug
+either when it&#8217;s an enhancement? Who and where to ask a flow question, say about branching, or
+about eligibility of a change. There&#8217;s <tt class="docutils literal"><span class="caps">CONTRIBUTING</span>.txt</tt> which didn&#8217;t appear long ago and it
+points to Jason Coombs&#8217; post <a class="footnote-reference" href="#id45" id="id19">[17]</a> about writing a perfect pull request. It is at least something
+but I think it can be more clear and CherryPy-specific. Also I think it should in the
+documentation, linked from the website&#8217;s main&nbsp;page.</p>
+<div class="section" id="quality-assurance">
+<h3>Quality&nbsp;assurance</h3>
+<p>I think things like bug #1298 <a class="footnote-reference" href="#id44" id="id20">[16]</a> should never happen to a project which is maintained in
+a responsible way and puts effort in quality assurance. Okay, I see <tt class="docutils literal">tox.ini</tt> in root of the
+project. I clone it, and run <tt class="docutils literal">tox</tt>. Duh, all tests have failed. Besides, not all the claimed
+environments are in the file. Moreover, it&#8217;s some kind of back in Soviet Russia story. Why the
+hell unit tests ask me questions!? Are they examining me instead? More surprises? ShiningPanda
+is dead <a class="footnote-reference" href="#id46" id="id21">[18]</a>, the same way as the link to it from the CherryPy website under <em>Online tests</em>
+section (<em>continuous integration</em> is kind of standard term for the thing, as online tests
+refer more to <span class="caps">IQ</span> tests, psychology, et&nbsp;cetera).</p>
+<p>To name it honestly, this is a reckless way of maintaining a project. Reckless to users whose
+applications will break with next release published this way. And <em>interpretation result</em> is
+as much time-consuming as to see whether the build page is green or red. No, I&#8217;m not promoting
+these cluttering cool badges. I&#8217;m talking about the responsive flow where every contributor
+runs tests on all supported Python implementations (with Tox) before pushing her changes. If
+one is lazy to care and to set up all implementations, but has itching fingers to push some
+changes anyway, having the notification like: <em>Hey, you&#8217;ve just broken CherryPy. Please
+fix <span class="caps">ASAP</span></em> would be helpful. I think for everyone who has write permission to the repository it
+makes sense to receive such notification. At very least the one who publishes CherryPy to the
+Cheese Shop should have rigid requirement to check <span class="caps">CI</span>&nbsp;page.</p>
+<p>The same concern, with lesser strain, applies to the ReadTheDocs builds, which all have failed
+for last 3 months <a class="footnote-reference" href="#id47" id="id22">[19]</a>.</p>
+<p>This is the problem which needs to be solved as soon as possible. In 2014 I tried the <span class="caps">CI</span> service
+called Drone.io, which supports the three major code hosing services. Well, it turned out to be
+usable <a class="footnote-reference" href="#id48" id="id23">[20]</a>. I can help assist or set it up for CherryPy, once flow and role questions
+are&nbsp;answered.</p>
+</div>
+<div class="section" id="barrier-to-entry">
+<h3>Barrier to&nbsp;entry</h3>
+<p>Hopefully, one of biggest barriers I was facing myself seems to have passed. I mean that
+documentation link erosion where almost every single CherryPy-related link on the web leaded
+to 404 page. I think ReadTheDocs adoption is huge improvement, especially considering that new
+documentation, being clearly a better one, lacks some details that were covered in version 3.3.
+Having persistent, versioned and indexable documentation is very&nbsp;helpful.</p>
+<p>I think, it should be stated more or less directly that if one wants a framework to
+make application design decisions it&#8217;s better off using something else, not CherryPy. Okay,
+here&#8217;s Joe who knows enough about Python. He&#8217;s conscious and is willing to make application design
+decisions and take responsibility for them. But he also has a deadline. Joe doesn&#8217;t expect his
+first real-world CherryPy application to be shiny from experienced CherryPy developer point of
+view, albeit functional from end-user&#8217;s. What&#8217;s the best way to help Joe create functional
+prototype quickly, and let him gradually improve the design and codebase of his application
+thereafter, along with CherryPy&nbsp;knowledge?</p>
+<p>Let&#8217;s look at CherryPy knowledge as a tree. Each branch represents a functionality. Say a CherryPy
+tool branch. As it goes from the root, there&#8217;re nodes like <em>Copy-paste this decorator to turn your
+handler result into <span class="caps">JSON</span></em>, <em>What are other tools capable for?</em>, <em>What is a CherryPy tool, and how
+to write one?</em>, <em>Tool hook-points, types, priorities, etc.</em>. The same is for other branches —
+from basic to advanced. And what will Joe benefit from the most is breadth-first traversing on the
+tree. Better if some of a few first levels are illustrated with runnable snippets. This way it&#8217;s
+possible to give overview, tunable blocks of code and directions for improvement. For the later is
+important to spur creativity, but not enforcing design decisions, in the way: <em>start with this,
+improve by yourself</em>.</p>
+<p>I&#8217;ve just glanced over the latest documentation over again, and surprise, it narrates in very
+similar fashion! Sylvain has done a great job. But what is catching my eye is that there&#8217;s two
+separate tutorial series now: one in the source code <a class="footnote-reference" href="#id49" id="id24">[21]</a>, another in the documentation <a class="footnote-reference" href="#id50" id="id25">[22]</a>.
+Even though both serve the same purpose, the former is much easier to maintain, covering with
+tests which leads to the bonus of better regression test suite. If the later&#8217;s textual flexibility
+can be sacrificed for less maintenance cost, I think, it&#8217;s possible to generate tutorial section
+from module docstrings and code, and merge the&nbsp;two.</p>
+<p>However, both series deal with simplest cases and there&#8217;s big gap between them and real-world
+application requirements. Again here I mean some code to base on directly or get ideas from to
+get a prototype faster. Sylvain&#8217;s CherryPy recipes <a class="footnote-reference" href="#id51" id="id26">[23]</a> referred in the documentation server
+times may answer this to some extent, but in general I think it&#8217;s still in question. But also
+whether it should maintained in centralized fashion, e.g. within CherryPy or it more suitable
+for external&nbsp;source.</p>
+</div>
+<div class="section" id="other-changes">
+<h3>Other&nbsp;changes</h3>
+<p>Bitbucket pages should have either actual supplementing information or no supplementing
+information. Menu community link <a class="footnote-reference" href="#id52" id="id27">[24]</a> leads to wiki home page where version section has latest
+version of 3.2.5. Menu development link <a class="footnote-reference" href="#id53" id="id28">[25]</a>, which point to the repository overview page refers
+to Python 2.3, where the site&#8217;s version starts with 2.5+. Referring <tt class="docutils literal">python setup.py install</tt> as
+installation command, which requires a manual download, ought to be changed to normal
+<tt class="docutils literal">pip install cherrypy</tt>.</p>
+<p>I think, minor changes on the website are&nbsp;needed:</p>
+<ul class="simple">
+<li>no need in download link in the&nbsp;menu,</li>
+<li>add <em>install</em> section after <em>features</em> which says <tt class="docutils literal">pip install cherrypy</tt>,</li>
+<li>community link is better to refer to the user&nbsp;group,</li>
+<li>rename <em>online tests</em>, change the service link, use better sentence which will emphasize&nbsp;reliability.</li>
+</ul>
+<p>About <tt class="docutils literal">_cp</tt> module prefix. There&#8217;re some public classes like <tt class="docutils literal">cherrypy._cptools.HandlerTool</tt>,
+which may be used in user code directly or as super classes. This isn&#8217;t correct naming, according
+to the underscore convention. So it&#8217;s a good idea to change it some day. Though as a PyDev user I
+can&#8217;t recall to any issues with&nbsp;it.</p>
+</div>
+</div>
+<div class="section" id="wrap-up">
+<h2>Wrap-up</h2>
+<p>No problems except quality assurance, other areas need small but continious&nbsp;improvement.</p>
+<hr class="docutils" />
+<table class="docutils footnote" frame="void" id="id29" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id15">2</a>)</em> <a class="reference external" href="http://cherrypy.org/">http://cherrypy.org/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id30" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/lT1cxovGyy8">https://groups.google.com/forum/#!topic/cherrypy-users/lT1cxovGyy8</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id31" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td><a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/MjrIZ_jljRQ">https://groups.google.com/forum/#!topic/cherrypy-users/MjrIZ_jljRQ</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id32" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[4]</td><td><em>(<a class="fn-backref" href="#id4">1</a>, <a class="fn-backref" href="#id13">2</a>)</em> <a class="reference external" href="http://nichol.as/benchmark-of-python-web-servers">http://nichol.as/benchmark-of-python-web-servers</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id33" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[5]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id18">2</a>)</em> <a class="reference external" href="http://stackoverflow.com/questions/tagged/cherrypy">http://stackoverflow.com/questions/tagged/cherrypy</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id34" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[6]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/wiki/ZenOfCherryPy">https://bitbucket.org/cherrypy/cherrypy/wiki/ZenOfCherryPy</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id35" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[7]</a></td><td><a class="reference external" href="https://www.python.org/dev/peps/pep-0020/">https://www.python.org/dev/peps/pep-0020/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id36" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[8]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/issue/1331">https://bitbucket.org/cherrypy/cherrypy/issue/1331</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id37" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[9]</a></td><td><a class="reference external" href="https://github.com/niwibe/django-sse">https://github.com/niwibe/django-sse</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id38" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[10]</a></td><td><a class="reference external" href="https://lincolnloop.com/blog/architecting-realtime-applications/">https://lincolnloop.com/blog/architecting-realtime-applications/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id39" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id11">[11]</a></td><td><a class="reference external" href="http://stackoverflow.com/q/25845161/2072035">http://stackoverflow.com/q/25845161/2072035</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id40" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[12]</a></td><td><a class="reference external" href="https://ws4py.readthedocs.org/">https://ws4py.readthedocs.org/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id41" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[13]</a></td><td><a class="reference external" href="https://docs.python.org/2/howto/sockets.html#performance">https://docs.python.org/2/howto/sockets.html#performance</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id42" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id16">[14]</a></td><td><a class="reference external" href="https://code.google.com/p/cherrypy-webapp-skeleton">https://code.google.com/p/cherrypy-webapp-skeleton</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id43" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id17">[15]</a></td><td><a class="reference external" href="https://code.google.com/p/qooxdoo-website-skeleton">https://code.google.com/p/qooxdoo-website-skeleton</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id44" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id20">[16]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/issue/1298">https://bitbucket.org/cherrypy/cherrypy/issue/1298</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id45" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id19">[17]</a></td><td><a class="reference external" href="http://blog.jaraco.com/2014/04/how-to-write-perfect-pull-request.html">http://blog.jaraco.com/2014/04/how-to-write-perfect-pull-request.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id46" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id21">[18]</a></td><td><a class="reference external" href="http://shiningpanda.com/shiningpanda-ci-clap-de-fin.html">http://shiningpanda.com/shiningpanda-ci-clap-de-fin.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id47" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id22">[19]</a></td><td><a class="reference external" href="https://readthedocs.org/builds/cherrypy">https://readthedocs.org/builds/cherrypy</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id48" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id23">[20]</a></td><td><a class="reference external" href="https://drone.io/saaj/qooxdoo-cherrypy-json-rpc">https://drone.io/saaj/qooxdoo-cherrypy-json-rpc</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id49" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id24">[21]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/src/tip/cherrypy/tutorial/?at=default">https://bitbucket.org/cherrypy/cherrypy/src/tip/cherrypy/tutorial/?at=default</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id50" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id25">[22]</a></td><td><a class="reference external" href="http://cherrypy.readthedocs.org/en/latest/tutorials.html">http://cherrypy.readthedocs.org/en/latest/tutorials.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id51" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id26">[23]</a></td><td><a class="reference external" href="https://bitbucket.org/Lawouach/cherrypy-recipes">https://bitbucket.org/Lawouach/cherrypy-recipes</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id52" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id27">[24]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/wiki/Home">https://bitbucket.org/cherrypy/cherrypy/wiki/Home</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id53" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id28">[25]</a></td><td><a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/overview">https://bitbucket.org/cherrypy/cherrypy/overview</a></td></tr>
+</tbody>
+</table>
+</div>
+
+	  <div class="clear"></div>
+	  
+	  <div class="info">&nbsp;<a href="/tag/cherrypy.html" class="tags">cherrypy</a>&nbsp;<a href="/tag/python.html" class="tags">python</a>&nbsp;<a href="/tag/future.html" class="tags">future</a>	  </div>
+	</div>
+	<div class="clear"></div>
+
+      <div class="clear"></div>
+      <div id="footer">
+        <p>
+	        Powered by <a href="http://getpelican.com/">Pelican</a>
+	          &middot; <a href="/feed.xml" rel="alternate">Atom Feed</a>
+        </p>
+      </div>
+    </div>
+    <div class="clear"></div>
+  </div>
+  <script type="text/javascript">
+	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	
+	  ga('create', 'UA-29858354-12', 'auto');
+	  ga('send', 'pageview');
+  </script>
+</body>
+</html>
