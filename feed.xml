@@ -572,8 +572,7 @@ notification when we have contributors who used to commit without running tests,
 conclusion that status badges can do the&amp;nbsp;job.&lt;/p&gt;
 &lt;p&gt;This way every contributor will know that an introduced regression will become a public knowledge
 in a matter of minutes. And that it won&amp;#8217;t make other members of the community happy about it.
-Hopefully, this as a form of enforcement of standards and new testing tools will help us go
-smoother. Also I think that pushing these badges atop is&amp;nbsp;good&lt;/p&gt;
+Hopefully, this as a form of enforcement of standards and new testing tools will help us go&amp;nbsp;smoother.&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Another thing that made me thinking about status indication was March Google Code shutdown
 announcement &lt;a class="footnote-reference" href="#id79" id="id13"&gt;[13]&lt;/a&gt;. For my Open Source code I was mostly using Google Code&amp;#8217;s Mercurial.
