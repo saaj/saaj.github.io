@@ -119,7 +119,7 @@ other normal tests that have non-deterministic behaviour, see below). Because CP
 counting garbage collector is deterministic, it&#8217;s a concurrency issue. What was really surprising
 for me hear was explanation like, okay, if it has failed run it once again until you&#8217;re sure that
 the failure persists. This <tt class="docutils literal">test_gc</tt> supplementing is disabled now until everything else is
-resolved, and it is clear who to handle it&nbsp;properly.</p>
+resolved, and it is clear how to handle it&nbsp;properly.</p>
 <p>Another thing that prevented certain classification to <em>pass</em> and <em>fail</em> and led to frequent
 freezes were request retries and absence of <span class="caps">HTTP</span> client&#8217;s socket timeout. I can only guess about
 the original reasons of such &#8220;carefulness&#8221; and not letting a test just fail. For instance, you can
