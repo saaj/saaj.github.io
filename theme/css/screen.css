@@ -41,8 +41,20 @@ ol, ul {
   padding-left : 2.5em; 
 }
 
+blockquote {
+  margin       : 1.5em 1.5em 1.5em 1.75em;
+  padding-left : .75em;
+  border-left  : 4px solid #15A9DB;
+  color        : #555;
+  font-style   : italic;
+}
+
 blockquote, q {
   quotes : none;
+}
+
+blockquote ol, blockquote ul {
+  padding-left : 1em; 
 }
 
 blockquote:before, blockquote:after,
@@ -83,13 +95,12 @@ table.footnote  {
 
 table.footnote td {
   border  : none;
-	padding : 0;
+  padding : 0;
 }
 
 table.footnote td.label {
   padding-right : 0.5em;
 }
-
 
 body {
   font-family : Georgia, serif;
@@ -110,6 +121,11 @@ a {
 
 ul {
   list-style : outside disc;
+}
+
+ul ul {
+  list-style : outside circle;
+  margin     : 0;
 }
 
 ol {
@@ -135,19 +151,11 @@ img, p, .post > .highlight, .highlighttable, h4, h5, h6 {
   margin-top : 1.2em;
 }
 
-blockquote {
-  margin       : 1.5em 1.5em 1.5em 1.75em;
-  padding-left : .75em;
-  border-left  : 4px solid #15A9DB;
-  color        : #555;
-  font-style   : italic;
-}
-
 hr { 
-	background-color : #ccc; 
-	height           : 1px; 
-	border           : 0;
-	margin           : 1.25em auto;
+  background-color : #ccc; 
+  height           : 1px; 
+  border           : 0;
+  margin           : 1.25em auto;
   width            : 50%;
 }
 
@@ -229,6 +237,38 @@ td.code {
   color : #586E75;
 }
 
+.contents ul {
+  list-style    : decimal;
+  padding-left  : 1.5em;
+  color         : #666;
+  font-size     : 1.1em;
+  counter-reset : section;
+}
+
+.contents ul li {
+	counter-increment : section;
+}
+
+.contents ul ul {
+	counter-reset : section;
+	list-style    : none;
+  margin        : 0.25em 0 0.75em 0; 
+  color         : #999;
+  font-size     : 0.9em;
+  padding-left  : 0;
+}
+
+.contents ul ul li:before {
+  content  : counters(section, ".") " "; 
+}
+
+.contents > p {
+  font-family : sans-serif;        
+  font-size   : 1.2em;  
+  font-style  : italic;
+  margin      : 2em 0 1em 0;
+}
+
 img {
   box-shadow    : 0px 1px 4px rgba(0, 0, 0, 0.15);
   border-radius : 0.3em;
@@ -252,6 +292,7 @@ sub {
 
 .post pre, .page pre {
   padding      : .8em;
+  margin-top   : .8em;
   font-size    : 12px;
   font-family  : Monospace;
   line-height  : 1.1em;
@@ -259,7 +300,7 @@ sub {
 }
 
 .readmore {
-	margin-top : 1em;
+  margin-top : 1em;
 }
 
 form.inline_edit {
@@ -399,13 +440,19 @@ tt.literal {
 }
 
 #footer p {
-	margin : 0; 
+  margin : 0; 
 }
 
 .right {
-	float : right; 
+  float : right; 
 }
 
 .clear {
-	clear : both; 
+  clear : both; 
+}
+
+.align-center {
+  display      : block;
+  margin-left  : auto;
+  margin-right : auto;
 }
