@@ -10,33 +10,33 @@ its range of&amp;nbsp;application.&lt;/p&gt;
 &lt;div class="contents topic" id="contents"&gt;
 &lt;p class="topic-title first"&gt;Contents&lt;/p&gt;
 &lt;ul class="simple"&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#testing" id="id124"&gt;Testing&lt;/a&gt;&lt;ul&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#test-determinism" id="id125"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#test-dependency" id="id126"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#test-isolation" id="id127"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#testing-progress" id="id128"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#tagged-tox-configuration" id="id129"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#tackling-entropy-of-threading-and-in-process-server-juggling" id="id130"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#status-indication" id="id131"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#drawing-the-line" id="id132"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#testing" id="id123"&gt;Testing&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-determinism" id="id124"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-dependency" id="id125"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-isolation" id="id126"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#testing-progress" id="id127"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#tagged-tox-configuration" id="id128"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#tackling-entropy-of-threading-and-in-process-server-juggling" id="id129"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#status-indication" id="id130"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#drawing-the-line" id="id131"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#ssl" id="id133"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;ul&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#experiment" id="id134"&gt;Experiment&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#problem" id="id135"&gt;Problem&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#plan" id="id136"&gt;Plan&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#ssl" id="id132"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#experiment" id="id133"&gt;Experiment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#problem" id="id134"&gt;Problem&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#plan" id="id135"&gt;Plan&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#docker" id="id137"&gt;Docker&lt;/a&gt;&lt;ul&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#nature" id="id138"&gt;Nature&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#application" id="id139"&gt;Application&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#docker" id="id136"&gt;Docker&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#nature" id="id137"&gt;Nature&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#application" id="id138"&gt;Application&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;li&gt;&lt;a class="reference internal" href="#questions" id="id140"&gt;Questions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#questions" id="id139"&gt;Questions&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
 &lt;div class="section" id="testing"&gt;
-&lt;h2&gt;&lt;a class="toc-backref" href="#id124"&gt;Testing&lt;/a&gt;&lt;/h2&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id123"&gt;Testing&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;As was discovered in &lt;a class="reference external" href="http://recollection.saaj.me/article/future-of-cherrypy-bright-and-shiny.html"&gt;Future of CherryPy&lt;/a&gt; quality
 assurance was a glaring problem. After I volunteered and started working on putting
 tests back in the right way, I&amp;#8217;ve discovered several testing methodological errors that were
@@ -69,7 +69,7 @@ issues may&amp;nbsp;raise.&lt;/p&gt;
 &lt;li&gt;test&amp;nbsp;isolation&lt;/li&gt;
 &lt;/ul&gt;
 &lt;div class="section" id="test-determinism"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id125"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id124"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;There were garbage collection tests that were automatically added to every subclass of
 &lt;tt class="docutils literal"&gt;test.helper.CPWebCase&lt;/tt&gt;. They are non-deterministic and fail sporadically (there are
 other normal tests that have non-deterministic behaviour, see below). Because CPython&amp;#8217;s reference
@@ -90,14 +90,14 @@ to its &lt;span class="caps"&gt;HTTP&lt;/span&gt; connections by&amp;nbsp;defaul
 integration &lt;a class="footnote-reference" href="#id69" id="id3"&gt;[3]&lt;/a&gt; or system tests &lt;a class="footnote-reference" href="#id70" id="id4"&gt;[4]&lt;/a&gt;.&lt;/blockquote&gt;
 &lt;/div&gt;
 &lt;div class="section" id="test-dependency"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id126"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id125"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;How do you like tests named like &lt;tt class="docutils literal"&gt;test_0_check_something&lt;/tt&gt;, &lt;tt class="docutils literal"&gt;test_1_check_something_else&lt;/tt&gt;, and
 so on? And what if they were named this way intentionally, so they run in order, and fail
 otherwise because latter depend on former. Specifically, you can not run test individually. All
 occurrence I&amp;#8217;ve found were renamed and freed from sibling&amp;nbsp;shackles.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="test-isolation"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id127"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id126"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;&lt;tt class="docutils literal"&gt;test.helper.CPWebCase&lt;/tt&gt;&amp;#8216;s server startup routine was made in equivalent of &lt;tt class="docutils literal"&gt;unittest&lt;/tt&gt;&amp;#8216;s
 &lt;tt class="docutils literal"&gt;setUpClass&lt;/tt&gt;, so tests in a test case were not isolated from each other, which made it
 problematic to deal with the case of tests that interfere with internals as it was really
@@ -116,7 +116,7 @@ bus.block() after start(), or call bus.exit() before the main thread exits.
 &lt;/pre&gt;
 &lt;/div&gt;
 &lt;div class="section" id="testing-progress"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id128"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id127"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;What has just been said about fixed and improved stuff is happening in my fork &lt;a class="footnote-reference" href="#id71" id="id5"&gt;[5]&lt;/a&gt;, it is not yet
 pushed upstream. More detailed description and discussion about current and above sections is in
 the thread in CherryPy user group &lt;a class="footnote-reference" href="#id72" id="id6"&gt;[6]&lt;/a&gt;. Because it&amp;#8217;s there until the moment Google decides
@@ -163,7 +163,7 @@ code_complexity.txt
 &lt;p&gt;For Codecov.io integration to work, environment variable &lt;tt class="docutils literal"&gt;CODECOV_TOKEN&lt;/tt&gt; should be&amp;nbsp;assigned.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="tagged-tox-configuration"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id129"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id128"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Final Tox configuration looks like the following. It emerged through series of rewrites that were
 led by tradeoffs between test duration, combined coverage report and need to test dependencies.
 I came to the last design after I realised importance of support of pyOpenSSL and thus the need to
@@ -281,7 +281,7 @@ test suite in desired environments,&amp;nbsp;e.g.:&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 &lt;/div&gt;
 &lt;div class="section" id="tackling-entropy-of-threading-and-in-process-server-juggling"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id130"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id129"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Even though there was a progress on making test suite more predictable, and actually runnable,
 it is still far from desired, and I was scratching my head trying to figure out how to gather
 test stats from all the environments. Solution was in the lighted place, right where I was
@@ -565,7 +565,7 @@ all this integration testing is quite useless if we assume we&amp;#8217;re fine 
 fail in any&amp;nbsp;test.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="status-indication"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id131"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id130"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Long story told short, I have changed my mind on status badges. After thinking a lot about
 organising project&amp;#8217;s status indication and notification, where most important is regression
 notification when we have contributors who used to commit without running tests, I came to
@@ -590,7 +590,7 @@ visible, in 1-click distance and parallel to project description it was&amp;nbsp
 &lt;/blockquote&gt;
 &lt;/div&gt;
 &lt;div class="section" id="drawing-the-line"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id132"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id131"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;As far as I see, testing infrastructure is ready. I also made several related changes here and
 there. Now I think it is a good time to put it into upstream. First, of course for other
 contributors to make use of the new tools. Second, for the sake of granularity because there&amp;#8217;s
@@ -599,7 +599,7 @@ I won&amp;#8217;t have much time for contribution, thus it&amp;#8217;s good time
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class="section" id="ssl"&gt;
-&lt;h2&gt;&lt;a class="toc-backref" href="#id133"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;/h2&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id132"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;As a part of discussion of design decisions made in the test suite &lt;a class="footnote-reference" href="#id72" id="id14"&gt;[6]&lt;/a&gt;, Joseph Tate, another
 CherryPy contributor expressed opinion that &lt;span class="caps"&gt;SSL&lt;/span&gt; support in CherryPy should be deprecated.
 Basically the message is about how can we guarantee security of the implementation if we can&amp;#8217;t
@@ -625,7 +625,7 @@ install other software. There&amp;#8217;re use cases then any &lt;span class="ca
 loss. And as I will show you below, although there&amp;#8217;re several issues it is possible to
 workaround them and configure CherryPy to serve an application over &lt;span class="caps"&gt;HTTPS&lt;/span&gt; securely even&amp;nbsp;today.&lt;/p&gt;
 &lt;div class="section" id="experiment"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id134"&gt;Experiment&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id133"&gt;Experiment&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Recently there was a CherryPy StackOverflow question right about the topic &lt;a class="footnote-reference" href="#id81" id="id16"&gt;[15]&lt;/a&gt;. The guy asked
 &lt;em&gt;how to block &lt;span class="caps"&gt;SSL&lt;/span&gt; protocols in favour of &lt;span class="caps"&gt;TLS&lt;/span&gt;&lt;/em&gt;. It led me to coming to the following
 quick-and-dirty&amp;nbsp;solution.&lt;/p&gt;
@@ -848,7 +848,7 @@ is obviously the same &lt;strong&gt;A-&lt;/strong&gt; because both underlying li
 resumption&lt;/em&gt; but doesn&amp;#8217;t have &lt;em&gt;forward secrecy&lt;/em&gt; for any&amp;nbsp;client.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="problem"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id135"&gt;Problem&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id134"&gt;Problem&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;After the experiment has taken place, it is time to generalise the results. Here&amp;#8217;s what is
 wrong with CherryPy&amp;#8217;s &lt;span class="caps"&gt;SSL&lt;/span&gt; support&amp;nbsp;now:&lt;/p&gt;
 &lt;ol class="arabic simple"&gt;
@@ -860,7 +860,7 @@ wrong with CherryPy&amp;#8217;s &lt;span class="caps"&gt;SSL&lt;/span&gt; suppor
 &lt;/ol&gt;
 &lt;/div&gt;
 &lt;div class="section" id="plan"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id136"&gt;Plan&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id135"&gt;Plan&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;I think that the problem is solvable with a reasonable effort. What has been said above may
 already have convinced you that no special cryptography knowledge is required. There&amp;#8217;s a scalar
 letter grade for A to F and several design decisions aimed at flexibility and&amp;nbsp;compatibility.&lt;/p&gt;
@@ -960,7 +960,7 @@ users to make their&amp;nbsp;decisions.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class="section" id="docker"&gt;
-&lt;h2&gt;&lt;a class="toc-backref" href="#id137"&gt;Docker&lt;/a&gt;&lt;/h2&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id136"&gt;Docker&lt;/a&gt;&lt;/h2&gt;
 &lt;blockquote&gt;
 People are running in circles, screaming &amp;#8220;DevOps&amp;#8221;. Besides over half of them also
 yell &amp;#8220;Docker&amp;#8221; at odd turns.&lt;/blockquote&gt;
@@ -989,7 +989,7 @@ for exactly this reason: unexperienced people are bound to talk about Docker, an
 things about what Docker can do and how to use it. I wish I could magically prevent this.&lt;/blockquote&gt;
 &lt;p&gt;So I ought to limit myself in saying stupid things&amp;nbsp;;-)&lt;/p&gt;
 &lt;div class="section" id="nature"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id138"&gt;Nature&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id137"&gt;Nature&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Basically Docker is like Vagrant + OpenVZ on vanilla kernel. The two are available for
 quite some time and have established use cases, reproducible development environment and
 lightweight, operating-system-level virtualisation &lt;a class="footnote-reference" href="#id108" id="id49"&gt;[42]&lt;/a&gt;, respectively. Although Docker combines
@@ -1057,7 +1057,7 @@ experience with existing tools, realising their shortcomings and addressing them
 few: Rocket &lt;a class="footnote-reference" href="#id117" id="id58"&gt;[51]&lt;/a&gt;, Vagga &lt;a class="footnote-reference" href="#id118" id="id59"&gt;[52]&lt;/a&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="application"&gt;
-&lt;h3&gt;&lt;a class="toc-backref" href="#id139"&gt;Application&lt;/a&gt;&lt;/h3&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id138"&gt;Application&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;With that being said I think thorough discussion of infrastructure and distributed application
 design within the scope of CherryPy project is not only a off-topic. It&amp;#8217;s a hugely out of the
 context. However the topic itself is actual and interesting, but I&amp;#8217;m sure everyone who is
@@ -1135,7 +1135,7 @@ in some way, I wrote&amp;nbsp;above.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class="section" id="questions"&gt;
-&lt;h2&gt;&lt;a class="toc-backref" href="#id140"&gt;Questions&lt;/a&gt;&lt;/h2&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id139"&gt;Questions&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;For these I can expect the answers only from Sylvain, but others&amp;#8217; ideas are also&amp;nbsp;welcomed.&lt;/p&gt;
 &lt;ol class="arabic simple"&gt;
 &lt;li&gt;Will you review my changes in the fork &lt;a class="footnote-reference" href="#id71" id="id65"&gt;[5]&lt;/a&gt;? Or it&amp;#8217;s easier if I&amp;#8217;ve created a pull
@@ -1147,7 +1147,7 @@ think it is needed as soon as&amp;nbsp;possible.&lt;/li&gt;
 3.7 for &lt;span class="caps"&gt;QA&lt;/span&gt;, 3.8 for &lt;span class="caps"&gt;SSL&lt;/span&gt;.&lt;/li&gt;
 &lt;li&gt;I still want to hear about your ideas about &lt;tt class="docutils literal"&gt;test_gc&lt;/tt&gt;.&lt;/li&gt;
 &lt;li&gt;We still have this outdated and poitless wiki home as landing page for the&amp;nbsp;repo.&lt;/li&gt;
-&lt;li&gt;Recent coverage report &lt;a class="footnote-reference" href="#id123" id="id66"&gt;[57]&lt;/a&gt; uncovered that we have a dozen with zero-coverage modules which
+&lt;li&gt;Recent coverage report &lt;a class="footnote-reference" href="#id74" id="id66"&gt;[8]&lt;/a&gt; uncovered that we have a dozen with zero-coverage modules which
 are probably&amp;nbsp;obsolete.&lt;/li&gt;
 &lt;/ol&gt;
 &lt;hr class="docutils" /&gt;
@@ -1196,7 +1196,7 @@ are probably&amp;nbsp;obsolete.&lt;/li&gt;
 &lt;table class="docutils footnote" frame="void" id="id74" rules="none"&gt;
 &lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
 &lt;tbody valign="top"&gt;
-&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id8"&gt;[8]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://codecov.io/bitbucket/saaj/cherrypy?ref=default"&gt;https://codecov.io/bitbucket/saaj/cherrypy?ref=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[8]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id8"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id66"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://codecov.io/bitbucket/saaj/cherrypy?ref=default"&gt;https://codecov.io/bitbucket/saaj/cherrypy?ref=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;table class="docutils footnote" frame="void" id="id75" rules="none"&gt;
@@ -1485,12 +1485,6 @@ are probably&amp;nbsp;obsolete.&lt;/li&gt;
 &lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
 &lt;tbody valign="top"&gt;
 &lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id63"&gt;[56]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/system/docker/Dockerfile"&gt;https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/system/docker/Dockerfile&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;table class="docutils footnote" frame="void" id="id123" rules="none"&gt;
-&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
-&lt;tbody valign="top"&gt;
-&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id66"&gt;[57]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://codecov.io/bitbucket/saaj/cherrypy?ref=default"&gt;https://codecov.io/bitbucket/saaj/cherrypy?ref=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;/div&gt;
