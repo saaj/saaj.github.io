@@ -137,7 +137,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight : bold;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-size   : 1.5em;
   line-height : 1em;
   margin      : 2em 0 1em 0;
@@ -147,7 +147,11 @@ h3 {
   font-size : 1.15em;
 }
 
-img, p, .post > .highlight, .highlighttable, h4, h5, h6 {
+h4 {
+  font-size : 1em;
+}
+
+img, p, .post > .highlight, .highlighttable, h5, h6 {
   margin-top : 1.2em;
 }
 
