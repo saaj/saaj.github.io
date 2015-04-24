@@ -913,7 +913,7 @@ binary that comes from a disto&amp;#8217;s repository have their own version of 
 breach is discovered it is reasonable to expect patched OpenSSL package to be shipped first.
 This gives an user ability to rebuild pyOpenSSL with latest OpenSSL as soon as possible in matter
 of&amp;nbsp;doing:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;pip install -U pyOpenSSL
+&lt;div class="highlight"&gt;&lt;pre&gt;pip install -I pyOpenSSL
 &lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;Embracing this purpose Python 3 support should be provided. Currently
 &lt;tt class="docutils literal"&gt;pyOpenSSLAdapter.makefile&lt;/tt&gt; uses &lt;tt class="docutils literal"&gt;wsgiserver.CP_fileobject&lt;/tt&gt; directly and uses
