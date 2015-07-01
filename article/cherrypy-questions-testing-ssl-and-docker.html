@@ -283,7 +283,7 @@ test it (see about <span class="caps">SSL</span> issues below). Then test sampli
 <p>This design heavily relies on great multi-dimensional configuration that appeared in Tox 1.8 <a class="footnote-reference" href="#id77" id="id11">[11]</a>.
 Given an environment, say <tt class="docutils literal"><span class="pre">py27-nt-ossl</span></tt>, Tox treats it like a set of tags,
 <tt class="docutils literal">{'py27', 'nt', 'ossl'}</tt>, where each entry is matched individually. This way any environment,
-that makes sense though, with desired qualities can be constructed even if it doesn&#8217;t listed in
+that makes sense though, with desired qualities can be constructed even if it isn&#8217;t listed in
 <tt class="docutils literal">envlist</tt>. Here&#8217;s a table that explains the purpose of the&nbsp;tags.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -1126,7 +1126,8 @@ RUN add-apt-repository ppa:fkrull/deadsnakes
 RUN apt-get update
 RUN apt-get --no-install-recommends -qy install python2.6 python2.6-dev python3.3 python3.3-dev
 
-RUN pip install detox
+RUN pip install &quot;tox &lt; 2&quot;
+RUN pip install &quot;detox &lt; 0.10&quot;
 
 WORKDIR /root
 RUN hg clone --branch default https://bitbucket.org/saaj/cherrypy
