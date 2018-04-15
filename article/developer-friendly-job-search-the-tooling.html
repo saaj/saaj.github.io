@@ -1,0 +1,832 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Recollection &middot; Developer-friendly job search. The tooling</title>
+  <link rel="shortcut icon" href="/favicon.ico" />
+    <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Recollection Atom Feed" />
+  <link rel="stylesheet" href="/theme/css/screen.css" type="text/css" />
+  <link rel="stylesheet" href="/theme/css/pygments.css" type="text/css" />
+
+
+
+    <meta name="tags" content="python" />
+    <meta name="tags" content="asyncio" />
+    <meta name="tags" content="browser-automation" />
+    <meta name="tags" content="sqlite" />
+    <meta name="tags" content="full-text-search" />
+    <meta name="tags" content="document-storage" />
+</head>
+<body>
+  <div id="header">
+    <div id="nav">      <div>
+        <a href="/">Home</a>
+      </div>
+      <div>
+        <a href="https://bitbucket.org/saaj">Code</a>
+      </div>
+      <div>
+        <a href="/archive.html">Archive</a>
+      </div>
+    </div>
+    <div class="header-box">
+        <h1><a href="/">Recollection</a></h1>
+    </div>
+  </div>
+  <div id="wrapper">
+    <div id="content">    <h4 class="date">Apr 15, 2018</h4>  
+  <div class="post">
+<h2 class="title">
+      <a href="/article/developer-friendly-job-search-the-tooling.html" rel="bookmark" title="Permanent Link to Developer-friendly job search. The tooling">
+        Developer-friendly job search. The&nbsp;tooling
+      </a>
+    </h2>
+  
+    <p>It is quite interesting to me to see how software job market works in the Netherlands
+from an active candidate&#8217;s point of view. Unfortunately one great journey has almost
+ended and there is a firm incentive to find something at least as good. Having my
+current job through StackOverflow Jobs, I intended to keep using what proved to work,
+like marking the profile active, entering <tt class="docutils literal">python <span class="pre">-django</span> <span class="pre">-sysadmin</span></tt> into the search
+field, adding relevant filters and subscribing to the search. That, as such, of course
+works, but it looks it is not the most popular software talent recruitment service
+that Dutch companies use. And many companies are still quite happy to pay 20% of the
+gross year salary per new hire to the volume-oriented keyword-matching salesmen,
+colloquially referred as&nbsp;recruiters.</p>
+
+<p>On the other side of price spectrum there are free (as a beer&#8230; on a degustation)
+services like Indeed and Glassdoor <a class="footnote-reference" href="#id23" id="id1">[1]</a> where employers can place their vacancies.
+The two seem to me most relevant and complete, but because the latter also provides
+valuable insight into company state, salary range and interview process I will
+focus on&nbsp;it.</p>
+<p>StackOverflow Jobs is in between. It&#8217;s definitely not free for employers. For our
+small company it costed around €2k for half-year access to active candidate database
+and one job posting. Most probably it&#8217;ll require a company to have a full-time
+<span class="caps">HR</span> employee to manage the interactions with candidates. But hiring 4-5 developers a
+year already justifies the investment, so Stack Exchange has growth potential&nbsp;here.</p>
+<p>Glassdoor has poor search features, term-inclusion-only search and location, which
+makes it a chore to examine the proposals&nbsp;manually.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#problem" id="id44">Problem</a></li>
+<li><a class="reference internal" href="#storage" id="id45">Storage</a><ul>
+<li><a class="reference internal" href="#fts3-and-fts4" id="id46"><span class="caps">FTS3</span> and <span class="caps">FTS4</span></a></li>
+<li><a class="reference internal" href="#json1" id="id47"><span class="caps">JSON1</span></a></li>
+<li><a class="reference internal" href="#implementation" id="id48">Implementation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#retrieval" id="id49">Retrieval</a><ul>
+<li><a class="reference internal" href="#pyppeteer" id="id50">Pyppeteer</a></li>
+<li><a class="reference internal" href="#iteration" id="id51">Iteration</a></li>
+<li><a class="reference internal" href="#parsing" id="id52">Parsing</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#glue" id="id53">Glue</a></li>
+<li><a class="reference internal" href="#listing-relevant-jobs" id="id54">Listing relevant&nbsp;jobs</a></li>
+<li><a class="reference internal" href="#wrap-up" id="id55">Wrap-up</a></li>
+</ul>
+</div>
+<div class="section" id="problem">
+<h2><a class="toc-backref" href="#id44">Problem</a></h2>
+<p>StackOverflow Jobs search features include <a class="footnote-reference" href="#id24" id="id2">[2]</a>:</p>
+<ol class="arabic simple">
+<li>tag inclusion and&nbsp;exclusion</li>
+<li>full-text search on body, title and&nbsp;company</li>
+<li>enumeration filters by contract type, industry and&nbsp;seniority</li>
+<li>salary&nbsp;range</li>
+<li>flag filters by remote option, visa and relocation&nbsp;sponsorship</li>
+<li>posted time&nbsp;filtering</li>
+</ol>
+<p>My job search criteria were the&nbsp;following:</p>
+<ul class="simple">
+<li>Python (backend software development) job preferably in&nbsp;Amsterdam</li>
+<li>The company develops own product, i.e. it&#8217;s not a&nbsp;consultancy</li>
+<li>The job is available directly, i.e. it&#8217;s not an agency or any
+other kind of&nbsp;intermediary</li>
+</ul>
+<p>At first glance it looks simple. What subset of the above list of feature
+is sufficient to cover&nbsp;these?</p>
+<ol class="arabic simple">
+<li>Location data should be good enough for equality comparison, but generally
+the country is small, very connected and geospatial search is not&nbsp;needed.</li>
+<li><em>A Python job</em> is a match against <tt class="docutils literal">[python]</tt> minus some other tags (though only
+if carefully tagged), but Glassdoor doesn&#8217;t have tags and implementing <span class="caps">NLP</span> to
+recognise them was not feasible. Doing just <tt class="docutils literal">Python</tt> will not only match all
+sorts of jobs with it in nice-to-have, but also match jobs that extensively use
+Python but are not about software development as such, e.g. devops, (data)
+science, test automation, screen scraping and probably others. Also don&#8217;t forget
+full-stack and junior/intern positions (no dedicated seniority field on
+Glassdoor&nbsp;either).</li>
+<li>Solving consultancies and intermediaries should be possible with a blacklist,
+but needs full-text index on company name to mitigate dealing with optionally
+present suffixes like &#8220;B.V.&#8221; and &#8220;<span class="caps">BV</span>&#8221;, geographical suffixes and the like.
+Using <span class="caps">NLP</span> to break down jobs into direct and indirect would be an interesting
+research, but again it was not&nbsp;feasible.</li>
+</ol>
+<p>Items 1 and 3 look clear. 2 needs more attention. It should also be possible to
+solve with smarter blacklisting. But let&#8217;s look at a sample of job titles, which
+match <tt class="docutils literal">Python</tt> query:</p>
+<ul class="simple">
+<li>Lead Data&nbsp;Scientist</li>
+<li>DevOps Engineer (Linux, <span class="caps">AWS</span>)</li>
+<li>Software Engineer Embedded Smart Systems (C/C++; C#;&nbsp;Python)</li>
+<li>Agile&nbsp;Tester</li>
+<li>Backend Software&nbsp;Engineer</li>
+<li>Experienced Python/Django Developer in Zaandam (<span class="caps">NL</span>/<span class="caps">ENG</span>)</li>
+<li>Java&nbsp;Developer</li>
+<li>Junior Full Stack&nbsp;Engineer</li>
+<li>Medior Front-end&nbsp;Developer</li>
+<li>Bioinformatic Postdoctoral&nbsp;Fellow</li>
+<li>C++ Software engineer Artificial intelligence <span class="caps">DELFT</span>&nbsp;40k-70k</li>
+<li>Portfolio Manager Quant&nbsp;Allocation</li>
+<li>PhD Student “Modelling causal interactions between marine&nbsp;microbes”</li>
+</ul>
+<p>Yes, <em>all sorts of jobs</em> as promised. The good thing is that indexing title and
+body separately can help a lot with blacklisting. Say, if the title includes
+<tt class="docutils literal">Django</tt> it&#8217;s definitely a no-go, but if <tt class="docutils literal">Django</tt> is mentioned in the body
+it depends and may be tolerable. The same way other terms, like <tt class="docutils literal">Java</tt> or
+<tt class="docutils literal">Embedded</tt> can be&nbsp;handled.</p>
+</div>
+<div class="section" id="storage">
+<h2><a class="toc-backref" href="#id45">Storage</a></h2>
+<p>Thus on the level of storage/search it&#8217;s necessary to&nbsp;have:</p>
+<ol class="arabic simple">
+<li>primary key, original, if exposed, or hash of the whole&nbsp;record</li>
+<li>title, full-text&nbsp;indexed</li>
+<li>employer, full-text&nbsp;indexed</li>
+<li>body, full-text&nbsp;indexed</li>
+<li><span class="caps">JSON</span> field or just blob for other&nbsp;properties</li>
+<li>status, just integer for own&nbsp;convenience</li>
+</ol>
+<p>What embedded database has full-text search support with document storage
+features and easy Python interface? The latter is about <span class="caps">JSON</span>-field support
+that PostgeSQL and MySQL have acquired.&nbsp;SQLite!</p>
+<p>The version that I have from Ubuntu Xenial&#8217;s repository, at the time of writing
+<tt class="docutils literal"><span class="pre">libsqlite3-0</span> <span class="pre">3.11.0-1ubuntu1</span></tt>, supports&nbsp;both:</p>
+<div class="highlight"><pre><span></span>$ <span class="nb">echo</span> <span class="s2">&quot;PRAGMA compile_options;&quot;</span> <span class="p">|</span> sqlite3 <span class="p">|</span> grep -E <span class="s2">&quot;FTS|JSON&quot;</span>
+ENABLE_FTS3
+ENABLE_FTS3_PARENTHESIS
+ENABLE_FTS4
+ENABLE_JSON1
+</pre></div>
+<p>And Python standard library <tt class="docutils literal">sqlite3</tt> <a class="footnote-reference" href="#id25" id="id3">[3]</a> uses it! Now briefly about
+the&nbsp;extensions.</p>
+<div class="section" id="fts3-and-fts4">
+<h3><a class="toc-backref" href="#id46"><span class="caps">FTS3</span> and <span class="caps">FTS4</span></a></h3>
+<p>The documentation says <a class="footnote-reference" href="#id26" id="id4">[4]</a>:</p>
+<blockquote>
+<span class="caps">FTS3</span> and <span class="caps">FTS4</span> are SQLite virtual table modules that allow users to perform
+full-text searches on a set of documents&#8230; <span class="caps">FTS3</span> and <span class="caps">FTS4</span> are nearly identical&#8230;
+<span class="caps">FTS4</span> is an enhancement to <span class="caps">FTS3</span>. <span class="caps">FTS3</span> has been available since SQLite version
+3.5.0 (2007-09-04). The enhancements for <span class="caps">FTS4</span> were added with SQLite version
+3.7.4 (2010-12-07).</blockquote>
+<p>A virtual table <a class="footnote-reference" href="#id27" id="id5">[5]</a> in SQLite&nbsp;is:</p>
+<blockquote>
+&#8230;an object that is registered with an open SQLite database connection. From
+the perspective of an <span class="caps">SQL</span> statement, the virtual table object looks like any
+other table or view. But behind the scenes, queries and updates on a virtual
+table invoke callback methods of the virtual table object instead of reading
+and writing on the database file.</blockquote>
+<p>In case of <span class="caps">FTS4</span> it looks like a view that behind the scenes operates 5
+<em>shadow tables</em> <a class="footnote-reference" href="#id28" id="id6">[6]</a> which are stored within the database file. And a note
+about <tt class="docutils literal">ENABLE_FTS3_PARENTHESIS</tt> and query&nbsp;syntax:</p>
+<blockquote>
+New applications should also define the SQLITE_ENABLE_FTS3_PARENTHESIS macro
+to enable the enhanced query syntax <a class="footnote-reference" href="#id29" id="id7">[7]</a>.</blockquote>
+<p>It means that <tt class="docutils literal">python <span class="pre">-django</span></tt> won&#8217;t work. <tt class="docutils literal">python <span class="caps">AND</span> <span class="caps">NOT</span> django</tt>
+(or <tt class="docutils literal">python <span class="caps">NOT</span> django</tt> because <tt class="docutils literal"><span class="caps">AND</span></tt> is the implicit operator) should be
+used&nbsp;instead.</p>
+<p>To better understand how full-text search is going to contribute to solving the
+problem, here is simplified code that represents the data structure <a class="footnote-reference" href="#id28" id="id8">[6]</a>, inverted
+index, that is used by the SQLite&nbsp;extension.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+
+
+<span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;alpha beta beta gamma gamma gamma&#39;</span><span class="p">),</span>
+  <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="s1">&#39;gamma delta&#39;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">invertedIndex</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">docId</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">:</span>
+  <span class="n">docIndex</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">offset</span><span class="p">,</span> <span class="n">term</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()):</span>
+    <span class="n">docIndex</span><span class="p">[</span><span class="n">term</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">offsetList</span> <span class="ow">in</span> <span class="n">docIndex</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">invertedIndex</span><span class="p">[</span><span class="n">term</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">docId</span><span class="p">,</span> <span class="n">offsetList</span><span class="p">))</span>
+</pre></div>
+<p>Result <tt class="docutils literal">invertedIndex</tt> looks&nbsp;like:</p>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s1">&#39;alpha&#39;</span> <span class="p">:</span> <span class="p">[(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+  <span class="s1">&#39;beta&#39;</span>  <span class="p">:</span> <span class="p">[(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])],</span>
+  <span class="s1">&#39;delta&#39;</span> <span class="p">:</span> <span class="p">[(</span><span class="mi">101</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+  <span class="s1">&#39;gamma&#39;</span> <span class="p">:</span> <span class="p">[(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+<span class="p">}</span>
+</pre></div>
+<p>Using this structure <span class="caps">FTS3</span> and <span class="caps">FTS4</span> serve the queries. <tt class="docutils literal">str.lower</tt> and <tt class="docutils literal">str.split</tt>
+in the snippet represent tokenisation of the text. Here no stemming is needed
+because most of technical terms are present intact, so I&#8217;ll use <tt class="docutils literal">unicode61</tt> for
+the virtual&nbsp;table.</p>
+<blockquote>
+The &#8220;unicode61&#8221; tokeniser is available beginning with SQLite version 3.7.13
+(2012-06-11). Unicode61 works very much like &#8220;simple&#8221; except that it does
+simple unicode case folding according to rules in Unicode Version 6.1 and
+it recognises unicode space and punctuation characters and uses those to
+separate tokens. The simple tokeniser only does case folding of <span class="caps">ASCII</span>
+characters and only recognises <span class="caps">ASCII</span> space and punctuation characters as
+token separators&#8230; By default, &#8220;unicode61&#8221; also removes all diacritics
+from Latin script characters.</blockquote>
+<p>One thing to point out is that &#8220;C++&#8221; and &#8220;C#&#8221; will be indistinguishable from &#8220;C&#8221;
+because non-alphanumeric characters will be treated as separators. SQLite
+doesn&#8217;t limit minimal term length or have built-in stop-word list. So to solve
+this <tt class="docutils literal">tokenchars</tt> is&nbsp;enough:</p>
+<blockquote>
+&#8230;&#8221;tokenchars=&#8221; option may be used to specify one or more extra characters
+that should be treated as part of tokens instead of as separator characters.</blockquote>
+<p>I also want to exclude &#8220;.<span class="caps">NET</span>&#8221; and adding &#8220;.&#8221; to the <tt class="docutils literal">tokenchars</tt> will cause
+issue with words on the end of a sentence, but it&#8217;s negligible for the use case.
+Alternatively <tt class="docutils literal"><span class="caps">LIKE</span></tt> can be safely used as a post-filter condition, or
+generally it&#8217;s possible to implement tokenisers in Python with <tt class="docutils literal">sqlitefts</tt> <a class="footnote-reference" href="#id34" id="id9">[12]</a>.</p>
+</div>
+<div class="section" id="json1">
+<h3><a class="toc-backref" href="#id47"><span class="caps">JSON1</span></a></h3>
+<p>The documentation says <a class="footnote-reference" href="#id30" id="id10">[8]</a>:</p>
+<blockquote>
+The json1 extension is a loadable extension that implements fifteen
+application-defined <span class="caps">SQL</span> functions and two table-valued functions that are useful
+for managing <span class="caps">JSON</span> content stored in an SQLite database&#8230; The json1 extension
+(currently) stores <span class="caps">JSON</span> as ordinary text&#8230; The json1 extension uses the
+sqlite3_value_subtype() and sqlite3_result_subtype() interfaces that were
+introduced with SQLite version 3.9.0 (2015-10-14).</blockquote>
+<p>Out of the 15 function I&#8217;ll use only <tt class="docutils literal">json_extract</tt> <a class="footnote-reference" href="#id31" id="id11">[9]</a>. Even though on storage
+level of <tt class="docutils literal"><span class="caps">JSON1</span></tt> <span class="caps">JSON</span> values are just string blobs, on logical level given set of
+function extends relation model <a class="footnote-reference" href="#id32" id="id12">[10]</a> of SQLite with document storage model <a class="footnote-reference" href="#id33" id="id13">[11]</a>.
+This provides great flexibility in data modelling, where one can take the best out
+of the two models, and still use declarative query language, <span class="caps">SQL</span>.</p>
+</div>
+<div class="section" id="implementation">
+<h3><a class="toc-backref" href="#id48">Implementation</a></h3>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+
+
+<span class="k">class</span> <span class="nc">JobStorage</span><span class="p">:</span>
+
+  <span class="n">_conn</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;db.sqlite&#39;</span><span class="p">,</span> <span class="n">isolation_level</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">      CREATE VIRTUAL TABLE IF NOT EXISTS job USING fts4(</span>
+<span class="s1">        properties, status, employer, title, body,</span>
+<span class="s1">        notindexed=properties, notindexed=status,</span>
+<span class="s1">        tokenize=unicode61 &quot;tokenchars=.+#&quot;)</span>
+<span class="s1">    &#39;&#39;&#39;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">):</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">      INSERT OR IGNORE INTO job(docid, properties, status, employer, title, body)</span>
+<span class="s1">      VALUES(:docid, :properties, :status, :employer, :title, :body)</span>
+<span class="s1">    &#39;&#39;&#39;</span>
+
+    <span class="n">title</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="p">{</span>
+      <span class="s1">&#39;docid&#39;</span>      <span class="p">:</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;dataset&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">],</span>
+      <span class="s1">&#39;employer&#39;</span>   <span class="p">:</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;employer&#39;</span><span class="p">],</span>
+      <span class="s1">&#39;properties&#39;</span> <span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="nb">str</span><span class="p">),</span>
+      <span class="s1">&#39;status&#39;</span>     <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s1">&#39;title&#39;</span>      <span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+      <span class="s1">&#39;body&#39;</span>       <span class="p">:</span> <span class="n">body</span>
+    <span class="p">})</span>
+</pre></div>
+<p><tt class="docutils literal">isolation_level = None</tt> re-enables auto-commit (for simplicity, and generally
+to let transactions be an explicit measure, because explicit is better than implicit).
+<tt class="docutils literal"><span class="pre">job['dataset']</span></tt> will be described in the next&nbsp;section.</p>
+</div>
+</div>
+<div class="section" id="retrieval">
+<h2><a class="toc-backref" href="#id49">Retrieval</a></h2>
+<p>Data retrieval in context of the web or how it&#8217;s called in less neutral terms &#8212; screen
+scraping &#8212; is usually implemented with <span class="caps">HTTP</span> client using a <span class="caps">HTML</span> parser that is capable of
+either XPath queries or <span class="caps">CSS</span> selectors. This time I wanted to try something new and the
+time was right. These days we see a new wave of headless browsers <a class="footnote-reference" href="#id35" id="id14">[13]</a>. I&#8217;m not talking
+about PhantomJS or the like, but rather ubiquitous desktop browsers that have gained
+official automation APIs. For instance, Chromium since version 59 supports DevTools
+Protocol (a.k.a. Remote Debugging Protocol) <a class="footnote-reference" href="#id36" id="id15">[14]</a> in&nbsp;Linux.</p>
+<p>DevTools Protocol is a WebSocket-based protocol and Google maintains an official client
+for it, <tt class="docutils literal">puppeteer</tt> <a class="footnote-reference" href="#id37" id="id16">[15]</a>, written in JavaScript. What&#8217;s better that there&#8217;s a port to
+Python 3.6+. It&#8217;s called <tt class="docutils literal">pyppeteer</tt> <a class="footnote-reference" href="#id38" id="id17">[16]</a>.</p>
+<div class="section" id="pyppeteer">
+<h3><a class="toc-backref" href="#id50">Pyppeteer</a></h3>
+<blockquote>
+Most things that you can do manually in the browser can be done using Puppeteer!</blockquote>
+<p>As it should be with Pyppeteer. Basically the protocol provides WebSocket-based <span class="caps">RPC</span> to
+<span class="caps">BOM</span>, <span class="caps">DOM</span> and user objects, and the implementation provides more-or-less transparent proxy
+object <span class="caps">API</span>. In case of Pyppeteer it&#8217;s <tt class="docutils literal">asyncio</tt> <span class="caps">API</span>.</p>
+<p>Here it a demonstration of the proxy behaviour. It&#8217;ll use
+<tt class="docutils literal">pyppeteer.element_handle.ElementHandle</tt> <a class="footnote-reference" href="#id40" id="id18">[18]</a> that represents <span class="caps">DOM</span> element. Here&#8217;s
+a JavaScript that one can run in Chromium&#8217;s Developer&nbsp;Tools.</p>
+<div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;div div.flexbox div a&#39;</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">hrefProperty</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">href</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">href</span> <span class="o">=</span> <span class="nx">hrefProperty</span><span class="p">.</span><span class="nx">valueOf</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">titleProperty</span> <span class="o">=</span> <span class="nx">a</span><span class="p">.</span><span class="nx">textContent</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">title</span> <span class="o">=</span> <span class="nx">titleProperty</span><span class="p">.</span><span class="nx">valueOf</span><span class="p">();</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">href</span><span class="p">,</span> <span class="nx">title</span><span class="p">);</span>
+</pre></div>
+<p>And the same thing with&nbsp;Pyppeteer:</p>
+<div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="k">await</span> <span class="n">page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;div div.flexbox div a&#39;</span><span class="p">)</span>
+<span class="n">hrefProperty</span> <span class="o">=</span> <span class="k">await</span> <span class="n">a</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;href&#39;</span><span class="p">)</span>
+<span class="n">href</span> <span class="o">=</span> <span class="k">await</span> <span class="n">hrefProperty</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">()</span>
+<span class="n">titleProperty</span> <span class="o">=</span> <span class="k">await</span> <span class="n">a</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+<span class="n">title</span> <span class="o">=</span> <span class="k">await</span> <span class="n">titleProperty</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">href</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+</pre></div>
+<p>There&#8217;re two must-know things about Pyppeteer. The first is that every attribute
+and value access needs to be <tt class="docutils literal">await</tt>&#8216;ed. The second is that <tt class="docutils literal">pyppeteer.page.Page.click</tt>
+and <tt class="docutils literal">pyppeteer.page.Page.waitForNavigation</tt> have a race condition and should be
+awaited simultaneously <a class="footnote-reference" href="#id41" id="id19">[19]</a>,&nbsp;like:</p>
+<div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">page</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="s1">&#39;#HeroSearchButton&#39;</span><span class="p">),</span> <span class="n">page</span><span class="o">.</span><span class="n">waitForNavigation</span><span class="p">())</span>
+</pre></div>
+<p>Towards the implementation, the idea for job retrieval <span class="caps">API</span> is to have an asynchronous
+iterator object implemented as asynchronous generator (one that mixes <tt class="docutils literal">yield</tt>
+and <tt class="docutils literal">await</tt>) as defined in <span class="caps">PEP</span> 525 <a class="footnote-reference" href="#id39" id="id20">[17]</a>. It will encapsulate browser preparation,
+pagination, addtional page interactions, throttling sleeps and at the same time in
+the calling code there will be just an <tt class="docutils literal">async for</tt> loop. I&#8217;ll be&nbsp;using:</p>
+<ul class="simple">
+<li>Python&nbsp;3.6.5</li>
+<li>Pyppeteer&nbsp;0.0.16</li>
+<li>Chromium&nbsp;64.0.3282.167</li>
+</ul>
+</div>
+<div class="section" id="iteration">
+<h3><a class="toc-backref" href="#id51">Iteration</a></h3>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+
+<span class="k">class</span> <span class="nc">JobIter</span><span class="p">:</span>
+
+  <span class="n">_page</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="n">_query</span>    <span class="o">=</span> <span class="kc">None</span>
+  <span class="n">_location</span> <span class="o">=</span> <span class="kc">None</span>
+  <span class="n">_days</span>     <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="n">_prepared</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">days</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_page</span> <span class="o">=</span> <span class="n">page</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_query</span>    <span class="o">=</span> <span class="n">query</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_location</span> <span class="o">=</span> <span class="n">location</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_days</span>     <span class="o">=</span> <span class="n">days</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Opening main page&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="s1">&#39;https://www.glassdoor.nl/index.htm&#39;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Entering query&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="s1">&#39;#KeywordSearch&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+      <span class="s1">&#39;function(id, loc) {document.getElementById(id).value = loc}&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;LocationSearch&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_location</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Opening result page&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="s1">&#39;#HeroSearchButton&#39;</span><span class="p">),</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForNavigation</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Selecting posted date range&#39;</span><span class="p">)</span>
+    <span class="n">datePosted</span> <span class="o">=</span> <span class="s1">&#39;#DKFilters &gt; div &gt; div &gt; div:nth-child(2)&#39;</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="n">datePosted</span><span class="p">)</span>
+
+    <span class="n">daysAgo</span> <span class="o">=</span> <span class="s1">&#39;#DKFilters .filter.expanded ul li[value=&quot;</span><span class="si">{}</span><span class="s1">&quot;]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_days</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForSelector</span><span class="p">(</span><span class="n">daysAgo</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">click</span><span class="p">(</span><span class="n">daysAgo</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Waiting for list to update&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForSelector</span><span class="p">(</span><span class="s1">&#39;.jlGrid.updating&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForSelector</span><span class="p">(</span><span class="s1">&#39;.jlGrid.updating&#39;</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_dismiss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">button</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;button.mfp-close&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">button</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">button</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">__aiter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepared</span><span class="p">:</span>
+      <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare</span><span class="p">()</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_prepared</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+      <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dismiss</span><span class="p">()</span>
+
+      <span class="n">button</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;#FooterPageNav .page.current&#39;</span><span class="p">)</span>
+      <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">button</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+      <span class="n">current</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+      <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Processing page </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
+
+      <span class="n">jobList</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelectorAll</span><span class="p">(</span><span class="s1">&#39;ul.jlGrid &gt; li&#39;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">jobList</span><span class="p">:</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">JobParser</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="p">)</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="k">await</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Processed job </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">job</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])</span>
+        <span class="k">yield</span> <span class="n">job</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+      <span class="n">button</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;#FooterPageNav .next&#39;</span><span class="p">)</span>
+      <span class="n">disabled</span> <span class="o">=</span> <span class="k">await</span> <span class="n">button</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.disabled&#39;</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">disabled</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Last page has been reached&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+      <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">button</span><span class="o">.</span><span class="n">click</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForNavigation</span><span class="p">())</span>
+      <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="parsing">
+<h3><a class="toc-backref" href="#id52">Parsing</a></h3>
+<p>Root element of a job listing is <span class="caps">HTML</span> list item tag which looks&nbsp;like:</p>
+<div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">li</span> <span class="n">class</span><span class="o">=</span><span class="s2">&quot;jl selected&quot;</span>
+  <span class="n">data</span><span class="o">-</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;2618878823&quot;</span> <span class="n">data</span><span class="o">-</span><span class="n">emp</span><span class="o">-</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;262109&quot;</span> <span class="n">data</span><span class="o">-</span><span class="ow">is</span><span class="o">-</span><span class="n">organic</span><span class="o">-</span><span class="n">job</span><span class="o">=</span><span class="s2">&quot;false&quot;</span>
+  <span class="n">data</span><span class="o">-</span><span class="n">sgoc</span><span class="o">-</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;-1&quot;</span> <span class="n">data</span><span class="o">-</span><span class="n">purchase</span><span class="o">-</span><span class="n">ad</span><span class="o">-</span><span class="n">order</span><span class="o">-</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;0&quot;</span> <span class="n">data</span><span class="o">-</span><span class="ow">is</span><span class="o">-</span><span class="n">easy</span><span class="o">-</span><span class="n">apply</span><span class="o">=</span><span class="s2">&quot;false&quot;</span>
+  <span class="n">data</span><span class="o">-</span><span class="n">njslv</span><span class="o">=</span><span class="s2">&quot;false&quot;</span><span class="o">/&gt;</span>
+</pre></div>
+<p>There&#8217;re several data attributes, notably <tt class="docutils literal">id</tt>:</p>
+<ol class="arabic simple">
+<li><tt class="docutils literal">id</tt> is internal Glassdoor identifier of a job which will
+help deduplicate jobs on subsequent&nbsp;runs,</li>
+<li><tt class="docutils literal">empId</tt> is an employer identifier, it&#8217;s is somewhat&nbsp;useful,</li>
+<li><tt class="docutils literal">isOrganicJob</tt>, initially I thought it the flag to filter out
+intermediaries, but unfortunately I didn&#8217;t grasp how exactly it is&nbsp;set.</li>
+</ol>
+<p>The attributes can be accessed as a dictionary under <tt class="docutils literal">dataset</tt> property, see
+<tt class="docutils literal">_getDataset</tt> below.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">decimal</span> <span class="k">import</span> <span class="n">Decimal</span>
+
+
+<span class="k">class</span> <span class="nc">JobParser</span><span class="p">:</span>
+
+  <span class="n">_elementHandle</span> <span class="o">=</span> <span class="kc">None</span>
+  <span class="n">_page</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eh</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span> <span class="o">=</span> <span class="n">eh</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_page</span> <span class="o">=</span> <span class="n">page</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;dataset&#39;</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">getProperties</span><span class="p">()</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">jsh</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">dataset</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="k">await</span> <span class="n">jsh</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">dataset</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getRating</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.compactStars&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">span</span><span class="p">:</span>
+      <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">span</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">Decimal</span><span class="p">((</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">))</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getTitleLink</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;div div.flexbox div a&#39;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">a</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;href&#39;</span><span class="p">)</span>
+    <span class="n">href</span> <span class="o">=</span> <span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">()</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">a</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">title</span><span class="p">,</span> <span class="n">href</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getEmployer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">div</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.empLoc div:nth-child(1)&#39;</span><span class="p">)</span>
+    <span class="n">firstNode</span> <span class="o">=</span> <span class="k">await</span> <span class="n">div</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;firstChild&#39;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">firstNode</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;nodeValue&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;–&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getCity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.subtle.loc&#39;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">span</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getDate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">div</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.hotListing&#39;</span><span class="p">)</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">div</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">ts</span>
+
+    <span class="n">span</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.showHH span&#39;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">span</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+    <span class="n">value</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span>
+      <span class="n">ts</span> <span class="o">-=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span> <span class="o">=</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;u&#39;</span><span class="p">:</span>
+      <span class="n">ts</span> <span class="o">-=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span> <span class="o">=</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;min&#39;</span><span class="p">:</span>
+      <span class="n">ts</span> <span class="o">-=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span> <span class="o">=</span> <span class="n">value</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported unit </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">unit</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">ts</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">_getBody</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;classList&#39;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elementHandle</span><span class="o">.</span><span class="n">click</span><span class="p">()</span>
+    <span class="n">spinner</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.jobDetails .ajaxSpinner&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">spinner</span><span class="p">:</span>
+      <span class="n">spinner</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">waitForSelector</span><span class="p">(</span><span class="s1">&#39;.jobDetails .ajaxSpinner&#39;</span><span class="p">,</span> <span class="n">hidden</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">div</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_page</span><span class="o">.</span><span class="n">querySelector</span><span class="p">(</span><span class="s1">&#39;.jobDetails .jobDescriptionContent&#39;</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="k">await</span> <span class="n">div</span><span class="o">.</span><span class="n">getProperty</span><span class="p">(</span><span class="s1">&#39;textContent&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="k">await</span> <span class="n">p</span><span class="o">.</span><span class="n">jsonValue</span><span class="p">())</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+  <span class="k">async</span> <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">title</span><span class="p">,</span> <span class="n">url</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getTitleLink</span><span class="p">()</span>
+    <span class="n">dataset</span><span class="p">,</span> <span class="n">rating</span><span class="p">,</span> <span class="n">employer</span><span class="p">,</span> <span class="n">city</span><span class="p">,</span> <span class="n">date</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_getDataset</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getRating</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getEmployer</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getCity</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getDate</span><span class="p">())</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getBody</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="s1">&#39;dataset&#39;</span>  <span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+      <span class="s1">&#39;rating&#39;</span>   <span class="p">:</span> <span class="n">rating</span><span class="p">,</span>
+      <span class="s1">&#39;url&#39;</span>      <span class="p">:</span> <span class="n">url</span><span class="p">,</span>
+      <span class="s1">&#39;employer&#39;</span> <span class="p">:</span> <span class="n">employer</span><span class="p">,</span>
+      <span class="s1">&#39;city&#39;</span>     <span class="p">:</span> <span class="n">city</span><span class="p">,</span>
+      <span class="s1">&#39;date&#39;</span>     <span class="p">:</span> <span class="n">date</span><span class="p">,</span>
+      <span class="s1">&#39;title&#39;</span>    <span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+      <span class="s1">&#39;body&#39;</span>     <span class="p">:</span> <span class="n">body</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="glue">
+<h2><a class="toc-backref" href="#id53">Glue</a></h2>
+<p>By default on first run Pyppeteer downloads Chromium build that is guaranteed to work.
+But because I already had compatible version pre-installed I explicitly provided
+<tt class="docutils literal">executablePath</tt> which disables the behaviour. <tt class="docutils literal">headless = False</tt> is useful for&nbsp;debugging.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pyppeteer</span> <span class="k">import</span> <span class="n">launch</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">days</span><span class="p">):</span>
+  <span class="n">browser</span> <span class="o">=</span> <span class="k">await</span> <span class="n">launch</span><span class="p">(</span><span class="n">executablePath</span> <span class="o">=</span> <span class="s1">&#39;/usr/bin/chromium-browser&#39;</span><span class="p">,</span> <span class="n">headless</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+  <span class="n">page</span> <span class="o">=</span> <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">newPage</span><span class="p">()</span>
+  <span class="n">storage</span> <span class="o">=</span> <span class="n">JobStorage</span><span class="p">()</span>
+  <span class="k">async</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">JobIter</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">days</span><span class="p">):</span>
+    <span class="n">storage</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+  <span class="k">await</span> <span class="n">browser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="nb">format</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(name)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;websockets&#39;</span><span class="p">,</span> <span class="s1">&#39;pyppeteer&#39;</span><span class="p">):</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+
+  <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="s1">&#39;Python&#39;</span><span class="p">,</span> <span class="s1">&#39;Nederland&#39;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="section" id="listing-relevant-jobs">
+<h2><a class="toc-backref" href="#id54">Listing relevant&nbsp;jobs</a></h2>
+<p>And finally after executing the above code, in several minutes there&#8217;s <tt class="docutils literal">db.sqlite</tt>.
+I used <tt class="docutils literal">sqliteman</tt> <a class="footnote-reference" href="#id42" id="id21">[20]</a> (available from Ubuntu Xenial&#8217;s repository) to query and
+explore it, because it correctly works with <span class="caps">JSON</span> attributes and clipboard (surprisingly
+SQLiteStudio, which I usually open SQLite databases with, has issues with&nbsp;both).</p>
+<p>A sample record looks&nbsp;like:</p>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;dataset&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;id&quot;</span>                <span class="o">:</span> <span class="mi">2622677334</span><span class="p">,</span>
+    <span class="s2">&quot;empId&quot;</span>             <span class="o">:</span> <span class="mi">823453</span><span class="p">,</span>
+    <span class="s2">&quot;isOrganicJob&quot;</span>      <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="s2">&quot;sgocId&quot;</span>            <span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;purchaseAdOrderId&quot;</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;isEasyApply&quot;</span>       <span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="s2">&quot;njslv&quot;</span>             <span class="o">:</span> <span class="kc">false</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;rating&quot;</span>   <span class="o">:</span> <span class="s2">&quot;2.9&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;url&quot;</span>      <span class="o">:</span> <span class="s2">&quot;https://www.glassdoor.nl/partner/jobListing.htm?...&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;employer&quot;</span> <span class="o">:</span> <span class="s2">&quot;Takeaway.com&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;city&quot;</span>     <span class="o">:</span> <span class="s2">&quot;Amsterdam&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;date&quot;</span>     <span class="o">:</span> <span class="s2">&quot;2018-03-23 16:10:59.413456&quot;</span>
+<span class="p">}</span>
+</pre></div>
+<p>Here follows the query I used. Yours most probably will be&nbsp;different.</p>
+<div class="highlight"><pre><span></span><span class="k">SELECT</span>
+  <span class="n">title</span><span class="p">,</span>
+  <span class="n">status</span><span class="p">,</span>
+  <span class="n">round</span><span class="p">(</span><span class="n">julianday</span><span class="p">(</span><span class="s1">&#39;now&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">julianday</span><span class="p">(</span><span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.date&#39;</span><span class="p">)))</span> <span class="n">ago</span><span class="p">,</span>
+  <span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.employer&#39;</span><span class="p">)</span> <span class="n">employer</span><span class="p">,</span>
+  <span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.dataset.empId&#39;</span><span class="p">)</span> <span class="n">eid</span><span class="p">,</span>
+  <span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.rating&#39;</span><span class="p">)</span> <span class="n">rating</span><span class="p">,</span>
+  <span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.city&#39;</span><span class="p">)</span> <span class="n">city</span><span class="p">,</span>
+  <span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.url&#39;</span><span class="p">)</span> <span class="n">url</span>
+<span class="k">FROM</span> <span class="n">job</span>
+<span class="k">WHERE</span> <span class="n">job</span> <span class="k">MATCH</span> <span class="s1">&#39;</span>
+<span class="s1">  python</span>
+<span class="s1">  NOT (django OR php OR java OR ruby OR perl OR C# OR .NET)</span>
+<span class="s1">  NOT (title:devops OR title:analyst OR title:analist OR title:support OR title:graduation OR</span>
+<span class="s1">    title:director OR title:phd OR title:researcher OR title:biologist OR</span>
+<span class="s1">    title:test OR title:tester OR title: &quot;quality assurance&quot; OR title:hacker OR</span>
+<span class="s1">    title:intern OR title:internship OR title:junior OR title:young OR</span>
+<span class="s1">    title: &quot;full stack&quot; OR title:fullstack OR title: &quot;front end&quot; OR</span>
+<span class="s1">    title:embedded OR title:firmware OR title:fpga OR title:C++ OR</span>
+<span class="s1">    title:science OR title:scientist OR title:consultant OR title:coach OR</span>
+<span class="s1">    title:marketing OR title:network OR title:operations OR title:student OR title:linux OR</span>
+<span class="s1">    title:architect OR title:android OR title:automation OR title: &quot;ops engineer&quot; OR</span>
+<span class="s1">    title:verification OR title:validation OR title:manager OR title:expert OR</span>
+<span class="s1">    title:azure OR title:vmware OR title: &quot;net developer&quot; OR title:trader)</span>
+<span class="s1">  NOT (employer:CareerValue OR employer: &quot;Bright Cubes&quot; OR employer:Deloitte OR</span>
+<span class="s1">    employer:Cegeka OR employer: &quot;Star Apple&quot; OR employer:HUMAN-CAPITAL OR employer:Bonque OR</span>
+<span class="s1">    employer:Sogeti OR employer:Yacht OR employer:iSense OR employer: &quot;Talent Relations&quot; OR</span>
+<span class="s1">    employer:Place-IT OR employer:Professionals OR employer:ISAAC OR</span>
+<span class="s1">    employer:Trinamics OR employer:CINQ OR employer:Teqoia OR employer:JouwICTvacature OR</span>
+<span class="s1">    employer:Gazelle OR employer:Consulting OR employer:Topicus OR employer: &quot;Blue Lynx&quot; OR</span>
+<span class="s1">    employer:Nobru OR employer:Qualogy OR employer:YER OR employer: &quot;IT Human Resources&quot; OR</span>
+<span class="s1">    employer:Montash OR employer:CodeGuild OR employer:recruitment OR employer: &quot;hot item&quot; OR</span>
+<span class="s1">    employer:MobGen OR employer:Mobiquity OR employer: &quot;Orange Quarter&quot; OR</span>
+<span class="s1">    employer: &quot;You Get&quot; OR employer:ITHR)</span>
+<span class="s1">&#39;</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="n">employer</span><span class="p">,</span> <span class="nb">date</span><span class="p">(</span><span class="n">json_extract</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s1">&#39;$.date&#39;</span><span class="p">))</span> <span class="k">DESC</span>
+</pre></div>
+<p>Yes, it&#8217;s pretty restrictive and thus gives relevant results, although I&#8217;m not very
+happy with constant manual blacklisting (there&#8217;s really whole lot of intermediaries).
+Maybe next time I&#8217;ll be looking for a job I employ some <span class="caps">NLP</span> or other machine learning.
+But now now this is&nbsp;it.</p>
+</div>
+<div class="section" id="wrap-up">
+<h2><a class="toc-backref" href="#id55">Wrap-up</a></h2>
+<ol class="arabic simple">
+<li>SQLite a Swiss army knife of an ad-hoc storage and&nbsp;search,</li>
+<li>Ubiquitous browsers have become automatable out of the&nbsp;box,</li>
+<li>Even though some vacancy search platforms provide decent search features and other
+try to automate job collection, like Indeed with its <span class="caps">XML</span> job feed format <a class="footnote-reference" href="#id43" id="id22">[21]</a>, it
+looks like the effort is not enough and penetration of developer-friendly automated
+job search tools can be significantly&nbsp;improved,</li>
+<li>Python for the&nbsp;win!</li>
+</ol>
+<p><span class="caps">P.S.</span> The new journey has already been scheduled&nbsp;:-)</p>
+<hr class="docutils" />
+<table class="docutils footnote" frame="void" id="id23" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><a class="reference external" href="https://www.glassdoor.nl/">https://www.glassdoor.nl/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id24" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://stackoverflow.com/help/advanced-search-parameters-jobs">https://stackoverflow.com/help/advanced-search-parameters-jobs</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id25" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td><a class="reference external" href="https://docs.python.org/3/library/sqlite3.html">https://docs.python.org/3/library/sqlite3.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id26" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[4]</a></td><td><a class="reference external" href="https://sqlite.org/fts3.html">https://sqlite.org/fts3.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id27" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[5]</a></td><td><a class="reference external" href="https://sqlite.org/vtab.html">https://sqlite.org/vtab.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id28" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[6]</td><td><em>(<a class="fn-backref" href="#id6">1</a>, <a class="fn-backref" href="#id8">2</a>)</em> <a class="reference external" href="https://sqlite.org/fts3.html#data_structures">https://sqlite.org/fts3.html#data_structures</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id29" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[7]</a></td><td><a class="reference external" href="https://sqlite.org/fts3.html#_set_operations_using_the_enhanced_query_syntax">https://sqlite.org/fts3.html#_set_operations_using_the_enhanced_query_syntax</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id30" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[8]</a></td><td><a class="reference external" href="https://sqlite.org/json1.html">https://sqlite.org/json1.html</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id31" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id11">[9]</a></td><td><a class="reference external" href="https://sqlite.org/json1.html#jex">https://sqlite.org/json1.html#jex</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id32" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[10]</a></td><td><a class="reference external" href="https://en.wikipedia.org/wiki/Relational_database">https://en.wikipedia.org/wiki/Relational_database</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id33" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[11]</a></td><td><a class="reference external" href="https://en.wikipedia.org/wiki/Document-oriented_database">https://en.wikipedia.org/wiki/Document-oriented_database</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id34" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[12]</a></td><td><a class="reference external" href="https://pypi.org/project/sqlitefts/">https://pypi.org/project/sqlitefts/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id35" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[13]</a></td><td><a class="reference external" href="https://en.wikipedia.org/wiki/Headless_browser">https://en.wikipedia.org/wiki/Headless_browser</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id36" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id15">[14]</a></td><td><a class="reference external" href="https://github.com/ChromeDevTools/devtools-protocol">https://github.com/ChromeDevTools/devtools-protocol</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id37" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id16">[15]</a></td><td><a class="reference external" href="https://github.com/GoogleChrome/puppeteer">https://github.com/GoogleChrome/puppeteer</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id38" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id17">[16]</a></td><td><a class="reference external" href="https://pypi.org/project/pyppeteer/">https://pypi.org/project/pyppeteer/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id39" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id20">[17]</a></td><td><a class="reference external" href="https://www.python.org/dev/peps/pep-0525/">https://www.python.org/dev/peps/pep-0525/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id40" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id18">[18]</a></td><td><a class="reference external" href="https://miyakogi.github.io/pyppeteer/reference.html#elementhandle-class">https://miyakogi.github.io/pyppeteer/reference.html#elementhandle-class</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id41" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id19">[19]</a></td><td><a class="reference external" href="https://miyakogi.github.io/pyppeteer/reference.html#pyppeteer.page.Page.click">https://miyakogi.github.io/pyppeteer/reference.html#pyppeteer.page.Page.click</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id42" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id21">[20]</a></td><td><a class="reference external" href="https://github.com/pvanek/sqliteman">https://github.com/pvanek/sqliteman</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id43" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id22">[21]</a></td><td><a class="reference external" href="https://www.indeed.com/intl/en/xmlinfo.html">https://www.indeed.com/intl/en/xmlinfo.html</a></td></tr>
+</tbody>
+</table>
+</div>
+
+    <div class="clear"></div>
+    
+    <div class="info">&nbsp;<a href="/tag/python.html" class="tags">python</a>&nbsp;<a href="/tag/asyncio.html" class="tags">asyncio</a>&nbsp;<a href="/tag/browser-automation.html" class="tags">browser-automation</a>&nbsp;<a href="/tag/sqlite.html" class="tags">sqlite</a>&nbsp;<a href="/tag/full-text-search.html" class="tags">full-text-search</a>&nbsp;<a href="/tag/document-storage.html" class="tags">document-storage</a>    </div>
+  </div>
+  <div class="clear"></div>
+
+      <div class="clear"></div>
+      <div id="footer">
+        <p>
+          Powered by <a href="http://getpelican.com/">Pelican</a>
+            &middot; <a href="/feed.xml" rel="alternate">Atom Feed</a>
+        </p>
+      </div>
+    </div>
+    <div class="clear"></div>
+  </div>
+  <script type="text/javascript">
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-29858354-12', 'auto');
+    ga('send', 'pageview');
+  </script>
+</body>
+</html>

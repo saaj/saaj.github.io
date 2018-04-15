@@ -1,0 +1,839 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Recollection - future</title><link href="http://recollection.saaj.me/" rel="alternate"></link><link href="http://recollection.saaj.me/tag/future.xml" rel="self"></link><id>http://recollection.saaj.me/</id><updated>2015-01-25T00:00:00+01:00</updated><entry><title>Future of CherryPy: bright and shiny?</title><link href="http://recollection.saaj.me/article/future-of-cherrypy-bright-and-shiny.html" rel="alternate"></link><published>2015-01-25T00:00:00+01:00</published><updated>2015-01-25T00:00:00+01:00</updated><author><name>saaj</name></author><id>tag:recollection.saaj.me,2015-01-25:/article/future-of-cherrypy-bright-and-shiny.html</id><summary type="html">&lt;p&gt;First off, I really hope so, tough at the same time I see the reasons for it. Moreover
+I have been trying to contribute back to the community by giving knowledge that could hopefully
+cut the rough edges that I’ve met on my way of learning and employing CherryPy [1]. And when
+CherryPy is calling, I have something to&amp;nbsp;say.&lt;/p&gt;
+&lt;p&gt;This article is my consideration in reply to the holiday post [2] by Sylvain Hellegouarch
+in CherryPy user group about its current state and future, which recalls to older big
+discussion [3] about the status of development of&amp;nbsp;CherryPy.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;First off, I really hope so, tough at the same time I see the reasons for it. Moreover
+I have been trying to contribute back to the community by giving knowledge that could hopefully
+cut the rough edges that I’ve met on my way of learning and employing CherryPy &lt;a class="footnote-reference" href="#id32" id="id1"&gt;[1]&lt;/a&gt;. And when
+CherryPy is calling, I have something to&amp;nbsp;say.&lt;/p&gt;
+&lt;p&gt;This article is my consideration in reply to the holiday post &lt;a class="footnote-reference" href="#id33" id="id2"&gt;[2]&lt;/a&gt; by Sylvain Hellegouarch
+in CherryPy user group about its current state and future, which recalls to older big
+discussion &lt;a class="footnote-reference" href="#id34" id="id3"&gt;[3]&lt;/a&gt; about the status of development of&amp;nbsp;CherryPy.&lt;/p&gt;
+
+&lt;div class="section" id="acquisition"&gt;
+&lt;h2&gt;Acquisition&lt;/h2&gt;
+&lt;p&gt;My CherryPy experience started in beginning of 2011. I had a chance to jump ship to Python
+web application development and I didn’t lose it. At that moment I had years of web development
+experience, so I was looking for the certain piece of software. If I would start this search
+today, most of the front page titles are the same. The same &lt;em&gt;you don&amp;#8217;t have to be the best to
+be popular&lt;/em&gt; still applies to the very domain of Python&amp;nbsp;application.&lt;/p&gt;
+&lt;p&gt;I&amp;#8217;ve spent a couple of weeks reading the web: reviews, comparisons, benchmarks &lt;a class="footnote-reference" href="#id35" id="id4"&gt;[4]&lt;/a&gt; and
+StackOverflow &lt;a class="footnote-reference" href="#id36" id="id5"&gt;[5]&lt;/a&gt;. And I have to admit that there are paths for newcomers to CherryPy,
+who look for stable, fast, well-designed and pythonic &lt;span class="caps"&gt;HTTP&lt;/span&gt; framework with its own Zen &lt;a class="footnote-reference" href="#id37" id="id6"&gt;[6]&lt;/a&gt;
+(like Python itself &lt;a class="footnote-reference" href="#id38" id="id7"&gt;[7]&lt;/a&gt;), that doesn&amp;#8217;t dictate application design, nor what tools to use,
+but rather provides structure, testability and primitives that help code&amp;nbsp;scale.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="scope"&gt;
+&lt;h2&gt;Scope&lt;/h2&gt;
+&lt;p&gt;Where CherryPy stands? I think it perfectly stands as a Python &lt;span class="caps"&gt;HTTP&lt;/span&gt; application server. It
+allows a developer to write a genuine Python code, use the best from the Cheese Shop,
+design applications in whatever desired way (but with restrictions of threaded execution&amp;nbsp;model).&lt;/p&gt;
+&lt;div class="section" id="self-contained-packages"&gt;
+&lt;h3&gt;Self-contained&amp;nbsp;packages&lt;/h3&gt;
+&lt;p&gt;I agree that stable pure-Python &lt;span class="caps"&gt;HTTP&lt;/span&gt; server is one of major features of CherryPy. Because
+basically, in most cases one can just forget about &lt;span class="caps"&gt;WSGI&lt;/span&gt;, and use good old &lt;span class="caps"&gt;HTTP&lt;/span&gt; — bare CherryPy or
+behind reverse-proxy like nginx. Less intermediaries means less problems as it simplifies
+development and deployment. However, I don&amp;#8217;t think it&amp;#8217;s an additive feature. If you extract the
+web-server into a stand-alone package, be it named Cheroot or something else, it won&amp;#8217;t be as
+valuable for application development. If there are other frameworks&amp;#8217; users who host their &lt;span class="caps"&gt;WSGI&lt;/span&gt;
+applications with CherryPy, it&amp;#8217;s their problem of deployment and of these framework&amp;#8217;s authors.
+This usage is ultimately a byproduct of CherryPy&amp;#8217;s &lt;span class="caps"&gt;WSGI&lt;/span&gt; compliance and stability, and let it
+stay&amp;nbsp;so.&lt;/p&gt;
+&lt;p&gt;On the other hand, as the questions risen in the post are mostly about the cost of CherryPy
+maintenance, if the increased modularity will help to reduce it, then it surely makes sense.
+But the extraction also has its cost, and if the code of target functionality is tightly coupled
+with the rest of the codebase, then benefits of extraction should clearly outweigh its cost.
+At least inner-package refactoring towards more encapsulated components is possible with
+almost the same&amp;nbsp;benefits.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="implementation-support"&gt;
+&lt;h3&gt;Implementation&amp;nbsp;support&lt;/h3&gt;
+&lt;p&gt;Regarding supported Python implementation official website says: &lt;em&gt;Python 2.5+, 3.1+, PyPy, Jython
+and Android&lt;/em&gt;. Documentation says: &lt;em&gt;CPython, IronPython, Jython and PyPy&lt;/em&gt; and &lt;em&gt;CherryPy supports
+Python 2.3 through to 3.4.&lt;/em&gt;. There&amp;#8217;s no need to say about official distribution, CPython, but its
+versions are in question. There&amp;#8217;s a lot of compatibility code for old Python versions in CherryPy,
+which can be shrunk by lifting the bar closer to actual ones. I don&amp;#8217;t think the move is for 3.x
+series, but for CherryPy 4, CPython 2.7 and 3.3+ are fine. This is a real way to make the codebase
+cleaner, smaller and fun to deal with&amp;nbsp;again.&lt;/p&gt;
+&lt;p&gt;PyPy is constantly taking more ground and is supported by many libraries that also grow in
+number. However I can&amp;#8217;t get many real use-cases out of my head (if we don&amp;#8217;t actually include the
+case of a long task which should be run in background, but is run synchronously as an effort
+tradeoff and assuming it can benefit from &lt;span class="caps"&gt;JIT&lt;/span&gt;), nor do I know if there&amp;#8217;s &lt;span class="caps"&gt;CPU&lt;/span&gt;-bound hot CherryPy
+code. Mostly I feel it&amp;#8217;s a cool-factor, but with possible real use-cases. So I think it&amp;#8217;s a good
+idea to keep it. The problem with supporting PyPy is its garbage collectors. They aren&amp;#8217;t based on
+reference counting, thus files, sockets and everything that was able to close itself passing out
+of the execution scope with zero references on CPython, won&amp;#8217;t deterministically keep doing it on
+PyPy. It makes more strict demands on code to keep it memory-leak free. Python3&amp;#8217;s
+&lt;tt class="docutils literal"&gt;ResourceWarning&lt;/tt&gt; can help with it. I left a bug report &lt;a class="footnote-reference" href="#id39" id="id8"&gt;[8]&lt;/a&gt; about the subject once when I was
+porting a CherryPy-based library to&amp;nbsp;Python3.&lt;/p&gt;
+&lt;p&gt;The rest is more questionable. CherryPy running on Android is clearly a cool-factor.
+&lt;span class="caps"&gt;SL4A&lt;/span&gt; with Python isn&amp;#8217;t straightforward to install, and even though there&amp;#8217;s complete
+CPython 2.6, it barely has a single real use-case. There&amp;#8217;s file &lt;span class="caps"&gt;API&lt;/span&gt;, SQLite and the rest
+important things we use server-side for, for PhoneGap and the like, for ones who write &lt;span class="caps"&gt;HTML5&lt;/span&gt;
+application. There&amp;#8217;s Kivy with established deployment. The same way I feel of Jython and
+IronPython support. I have no idea if anyone is actually using CherryPy on them, but having them
+officially supported complicates things. Testing, debugging, developing the framework. I think
+these highly specific environments should be covered by enthusiasts, if there&amp;#8217;re any out there,
+who deal with them. If there&amp;#8217;s a bug, say for Jython, it should be treated as enhancement and
+fixed only if the fix doesn&amp;#8217;t impede design, performance and maintainability of primary
+implementations&amp;#8217; code. I think guarantees and according measures are needed, so it&amp;#8217;s clear
+what is officially supported by CherryPy, and what it may run&amp;nbsp;on.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="to-depend-or-not-to"&gt;
+&lt;h3&gt;To depend or not&amp;nbsp;to&lt;/h3&gt;
+&lt;p&gt;For an application it is perfectly fine to depend on as many libraries to delegate as most
+out-of-domain functionality away from its codebase. On the other hand for a library it&amp;#8217;s not as
+good idea. There&amp;#8217;s a functional difference between a library and a framework, but for current
+form of CherryPy these terms feel&amp;nbsp;interchangeable.&lt;/p&gt;
+&lt;p&gt;For a library having no dependencies is a feature when general &lt;em&gt;less moving parts, less issues&lt;/em&gt;
+applies. It may relate to broken, abandoned, license-changed 3rd-party dependencies. It may be
+incompatible changes, or used C-modules which complicate installation and use in PyPy and other
+implementations and platforms. Thus as CherryPy has grown its own pure-Python internals which
+are fast and stable, I think there&amp;#8217;s no point in abandoning&amp;nbsp;them.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="hype-fuss-and-choices"&gt;
+&lt;h3&gt;Hype, fuss and&amp;nbsp;choices&lt;/h3&gt;
+&lt;p&gt;Last, but not least thing I want to note about the scope of CherryPy is its technology choice.
+&lt;span class="caps"&gt;WSGI&lt;/span&gt; is good example here. From inception it likely was a cool thing in Python. &lt;span class="caps"&gt;WSGI&lt;/span&gt; here
+and &lt;span class="caps"&gt;WSGI&lt;/span&gt; there, standards, uniformity and stuff. And then, a little later&amp;#8230; oops, a synchronous
+protocol. No WebSockets, no &lt;span class="caps"&gt;SSE&lt;/span&gt;, no other close to real-time techniques. This choice affects, for
+example things like django-sse &lt;a class="footnote-reference" href="#id40" id="id9"&gt;[9]&lt;/a&gt; and its users &lt;a class="footnote-reference" href="#id41" id="id10"&gt;[10]&lt;/a&gt; (though this community is strongest in
+seeing everything as a nail). But also PaaS providers like OpenShift &lt;a class="footnote-reference" href="#id42" id="id11"&gt;[11]&lt;/a&gt;, and probably&amp;nbsp;others.&lt;/p&gt;
+&lt;p&gt;That is to say it&amp;#8217;s okay to be compliant (e.g. &lt;span class="caps"&gt;WSGI&lt;/span&gt;-compliant), but it&amp;#8217;s not okay to be a pliable
+bigot, who praises next cool X at every turn. In that sense I like how CherryPy stands. Simple is
+simple in a threaded server. Real-time stuff needed? Sylvain&amp;#8217;s ws4py &lt;a class="footnote-reference" href="#id43" id="id12"&gt;[12]&lt;/a&gt; to the rescue.
+Simple background processing? There you go with &lt;tt class="docutils literal"&gt;cherrypy.process.plugins.BackgroundTask&lt;/tt&gt;.
+So I want to keep seeing CherryPy making conscious and pragmatic technology&amp;nbsp;choices.&lt;/p&gt;
+&lt;p&gt;2014 has seen new breed of asynchronous libraries within Python 3.4+ batteries, &lt;tt class="docutils literal"&gt;asyncio&lt;/tt&gt;. It
+is nice to see co-operative execution in Python finds more expressive language constructs and
+tooling, but apart from its niche uses I suspect it&amp;#8217;ll be next asynchronicity-everywhere craze,
+which will lead to rewrites, new cool stuff and more &amp;#8220;pressure&amp;#8221; on users of &amp;#8220;old&amp;#8221; software. At
+least, there&amp;#8217;s no evidence that it can be faster on generic load, as CherryPy is neck and neck
+with Tornado &lt;a class="footnote-reference" href="#id35" id="id13"&gt;[4]&lt;/a&gt;. There&amp;#8217;s good socket performance notice &lt;a class="footnote-reference" href="#id44" id="id14"&gt;[13]&lt;/a&gt; in Python documentation which
+also applies generally to such design&amp;nbsp;choice.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;There’s no question that the fastest sockets code uses non-blocking sockets and select to
+multiplex them. You can put together something that will saturate a &lt;span class="caps"&gt;LAN&lt;/span&gt; connection without
+putting any strain on the &lt;span class="caps"&gt;CPU&lt;/span&gt;. The trouble is that an app written this way can’t do much
+of anything else - it needs to be ready to shuffle bytes around at all&amp;nbsp;times.&lt;/p&gt;
+&lt;p&gt;&amp;#8230;&lt;/p&gt;
+&lt;p&gt;Finally, remember that even though blocking sockets are somewhat slower than non-blocking,
+in many cases they are the “right” solution. After all, if your app is driven by the data
+it receives over a socket, there’s not much sense in complicating the logic just so your
+app can wait on &lt;tt class="docutils literal"&gt;select&lt;/tt&gt; instead of &lt;tt class="docutils literal"&gt;recv&lt;/tt&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="audience"&gt;
+&lt;h2&gt;Audience&lt;/h2&gt;
+&lt;p&gt;Naturally appreciation comes from the target audience. For a newbie in &lt;span class="caps"&gt;HTTP&lt;/span&gt; (which is a
+complex protocol by the way) and application development in general, Django may be a blessed
+gift because it helps to meet her goals by answering as many development questions as possible,
+and at the same time for an experienced developer it may seem a worthless bulk of bloatware
+that solves all its tasks equally poor (like all generic solutions, though). The same newbie
+won&amp;#8217;t be able to effectively use CherryPy because it won&amp;#8217;t answer the several dozen of questions
+for&amp;nbsp;her.&lt;/p&gt;
+&lt;p&gt;If CherryPy stays CherryPy there can&amp;#8217;t and shoundn&amp;#8217;t be answers for many of them. How to design
+my application? What application directory layout to use? What persistance layer and storage to
+employ? How do I render a template in CherryPy? It&amp;#8217;s all up to you, developer. From my
+experience, reading others&amp;#8217; opinions on the web, and particularly in the user group, there is
+an unanimously opinion that CherryPy&amp;#8217;s barrier to entry is high, but once you wrapped your head
+around its concepts you&amp;#8217;re enlightened and&amp;nbsp;empowered.&lt;/p&gt;
+&lt;p&gt;These points lead to two measures of increasing CherryPy user base, and hopefully contributors at
+some proportional rate. First is targeting more specific audience. Examining the main page &lt;a class="footnote-reference" href="#id32" id="id15"&gt;[1]&lt;/a&gt; it
+is at least not bad. It shows that simple is easy, and gives clues that complex is possible. It
+refers to &lt;em&gt;any other object-oriented Python program&lt;/em&gt;, which indicates good &lt;span class="caps"&gt;API&lt;/span&gt;. But it&amp;#8217;s biased
+opinion, because I look at things in reverse. Is it really that comprehensible for one who is
+making decision at the moment? Is there some real-world CherryPy code that is widely
+considered worth exposing, that is done &amp;#8220;right&amp;#8221; way and promotes best CherryPy practices? Second
+is means of lowering and alleviating barrier to entry, see &lt;a class="reference internal" href="#improvement"&gt;Improvement&lt;/a&gt;&amp;nbsp;section.&lt;/p&gt;
+&lt;p&gt;A note about code hosting that is supposed to affect the audience. I agree with Konstantin
+Molchanov, that magic pixies&amp;#8230; wait no, the best friend of Ruby and Rails, to the backbone
+awesome, the octocat won&amp;#8217;t make CherryPy popular by the wave of its tentacle. There&amp;#8217;s no outreach
+program nor there&amp;#8217;s traffic charity for newcomers on Github. It&amp;#8217;s a popular code hosting which
+makes it easy to contribute to a Git repository, in case there&amp;#8217;re ones who are willing to. But
+if there are no new contributors, I don&amp;#8217;t see the way it can&amp;nbsp;help.&lt;/p&gt;
+&lt;p&gt;Though it may not work in opposite direction, because if there&amp;#8217;s a Python developer willing to
+contribute to a Python project, the developer may expect a Python tool for it, which Git is not.
+I think it&amp;#8217;s a disillusioned and naive idea to turn away from Mercurial to get more Python users.
+At the same time, I cannot disagree with Nic Young that there&amp;#8217;re a few developer services (mostly
+for quality assurance) which integrate only with Github, which are free for open source projects
+and may be useful for CherryPy (e.g. TravisCI is not Git-only, but Github-only because it&amp;#8217;s tied
+to its &lt;span class="caps"&gt;API&lt;/span&gt;), albeit none of them lack&amp;nbsp;alternatives.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="part-taken"&gt;
+&lt;h2&gt;Part&amp;nbsp;taken&lt;/h2&gt;
+&lt;p&gt;A year after I commenced my CherryPy affair one web application project was in production and I
+possessed certain portion of experience. Specifically saying, deployment struggle experience.
+Having &lt;span class="caps"&gt;HTTP&lt;/span&gt;-only deployment was very helpful, because I could reuse the knowledge I had, but Linux
+part was at most scarce, poorly covered and I was groping for valuable pieces of knowledge all
+over the web. Having mint Debian box how do I make my application continuously deployable? How do
+I make it first-class daemon and run it as &lt;em&gt;www-data&lt;/em&gt;? How do I put it behind nginx? How do I
+monitor its memory and &lt;span class="caps"&gt;CPU&lt;/span&gt; usage? How to restart it if it has crashed? How do I rotate its&amp;nbsp;logs?&lt;/p&gt;
+&lt;p&gt;That time I already had the answers, and they were put together and published as tutorial/skeleton
+project &lt;a class="footnote-reference" href="#id45" id="id16"&gt;[14]&lt;/a&gt;. I felt it was necessary contribution to make. Obviously, it hasn&amp;#8217;t received high
+volume traffic, but qualitatively there&amp;#8217;re constant visits from all over the world (and least from
+the countries where people do &lt;span class="caps"&gt;IT&lt;/span&gt;), which indicates that CherryPy still attracts new&amp;nbsp;users.&lt;/p&gt;
+&lt;p&gt;In mid-2013 I&amp;#8217;ve written another tutorial/skeleton project &lt;a class="footnote-reference" href="#id46" id="id17"&gt;[15]&lt;/a&gt;, and even though its goal
+is maintainable JavaScript website-like application design, its server-side is CherryPy
+application with real-world template layout for Jina2 and according CherryPy tool. I&amp;#8217;ve found
+time to write documentation for it only in the end of 2014, so it is also an on topic&amp;nbsp;thing.&lt;/p&gt;
+&lt;p&gt;In the spring of 2014 I started to participate on StackOverflow&amp;#8217;s CherryPy tag &lt;a class="footnote-reference" href="#id36" id="id18"&gt;[5]&lt;/a&gt;. It was
+another pay-off kind of thing, because the site was helpful to me, and its CherryPy part
+specifically. But the latter sadly had a lot of unanswered question making it feel a little
+abandoned. In fact many questions are quite interesting dealing with performance, design,
+execution model of CherryPy, so it requires an answerer to have a good grasp of documentation and
+codebase. Besides making other users&amp;#8217; CherryPy experience better, it is fun and cognitive
+activity. It sheds the light on how people really use CherryPy, how they start, where are
+remaining rough edges and what is the room for&amp;nbsp;improvement.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="improvement"&gt;
+&lt;h2&gt;Improvement&lt;/h2&gt;
+&lt;p&gt;Inherently I&amp;#8217;m an application guy. I pick out cog-wheels, tune them and make spin together. I
+don&amp;#8217;t work on a library oftentimes, nor do I have much time for it, but because I really value
+CherryPy I want to have a way to do it, in case I have time and idea for improvement or fix. For
+instance, I want to add privilege drop plugin to &lt;tt class="docutils literal"&gt;cherryd&lt;/tt&gt; and make other minor improvement to&amp;nbsp;it.&lt;/p&gt;
+&lt;p&gt;When you file a bug report, you generally expect someone, a core contributor or so, to tell you
+whether it is generally valid or not. Then it may be re-prioritized, assigned to someone or put
+on a shelf to wait its day. Without this initial input it&amp;#8217;s a little confusing. &amp;#8220;Okay, no one
+replied. It should be working other way&amp;#8221;, — you may think, at&amp;nbsp;best.&lt;/p&gt;
+&lt;p&gt;Understanding the flow of one&amp;#8217;s patch to CherryPy codebase is also important. Official site says
+&lt;em&gt;fork CherryPy on BitBucket here and submit pull-request with your modifications&lt;/em&gt;. When it&amp;#8217;s a bug
+either when it&amp;#8217;s an enhancement? Who and where to ask a flow question, say about branching, or
+about eligibility of a change. There&amp;#8217;s &lt;tt class="docutils literal"&gt;&lt;span class="caps"&gt;CONTRIBUTING&lt;/span&gt;.txt&lt;/tt&gt; which didn&amp;#8217;t appear long ago and it
+points to Jason Coombs&amp;#8217; post &lt;a class="footnote-reference" href="#id48" id="id19"&gt;[17]&lt;/a&gt; about writing a perfect pull request. It is at least something
+but I think it can be more clear and CherryPy-specific. Also I think it should in the
+documentation, linked from the website&amp;#8217;s main&amp;nbsp;page.&lt;/p&gt;
+&lt;div class="section" id="quality-assurance"&gt;
+&lt;h3&gt;Quality&amp;nbsp;assurance&lt;/h3&gt;
+&lt;p&gt;I think things like bug #1298 &lt;a class="footnote-reference" href="#id47" id="id20"&gt;[16]&lt;/a&gt; should never happen to a project which is maintained in
+a responsible way and puts effort in quality assurance. Okay, I see &lt;tt class="docutils literal"&gt;tox.ini&lt;/tt&gt; in root of the
+project. I clone it, and run &lt;tt class="docutils literal"&gt;tox&lt;/tt&gt;. Duh, all environments have failed. Besides, not all the
+claimed environments are in the file. Moreover, it&amp;#8217;s some kind of back in Soviet Russia story.
+Why the hell unit tests ask me questions!? Are they examining me instead? More surprises?
+ShiningPanda is dead &lt;a class="footnote-reference" href="#id49" id="id21"&gt;[18]&lt;/a&gt;, the same way as the link to it from the CherryPy website under
+&lt;em&gt;online tests&lt;/em&gt; section (&lt;em&gt;continuous integration&lt;/em&gt; is kind of standard term for the thing, as
+online tests refer more to &lt;span class="caps"&gt;IQ&lt;/span&gt; tests, psychology, et&amp;nbsp;cetera).&lt;/p&gt;
+&lt;p&gt;To name it honestly, this is a reckless way of maintaining a project. Reckless to users whose
+applications will break with next release published this way. And &lt;em&gt;interpretation result&lt;/em&gt; is
+as much time-consuming as to see whether the build page is green or red. No, I&amp;#8217;m not promoting
+these cool badges one can see all around. I&amp;#8217;m talking about the responsive flow where every
+contributor runs tests on all supported Python implementations (with Tox) before pushing her
+changes. If one is lazy to care and to set up all implementations, but has itching fingers to
+push some changes anyway, having the notification like: &lt;em&gt;Hey, you&amp;#8217;ve just broken CherryPy. Please
+fix &lt;span class="caps"&gt;ASAP&lt;/span&gt;&lt;/em&gt; would be helpful. I think for everyone who has write permission to the repository it
+makes sense to receive such notification. At very least the one who publishes CherryPy to the
+Cheese Shop should have rigid requirement to check &lt;span class="caps"&gt;CI&lt;/span&gt;&amp;nbsp;page.&lt;/p&gt;
+&lt;p&gt;The same concern, with lesser strain, applies to the ReadTheDocs builds, which all have failed
+for last 3 months &lt;a class="footnote-reference" href="#id50" id="id22"&gt;[19]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This is the problem which needs to be solved as soon as possible. In 2014 I tried the &lt;span class="caps"&gt;CI&lt;/span&gt; service
+called Drone.io, which supports the three major code hosing services. Well, it turned out to be
+usable (build page example &lt;a class="footnote-reference" href="#id51" id="id23"&gt;[20]&lt;/a&gt;). I can help assist or set it up for CherryPy, once flow and
+role questions are&amp;nbsp;answered.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="barrier-to-entry"&gt;
+&lt;h3&gt;Barrier to&amp;nbsp;entry&lt;/h3&gt;
+&lt;p&gt;Hopefully, one of biggest barriers I was facing myself seems to have passed. I mean that
+documentation link erosion where almost every single CherryPy-related link on the web leaded
+to 404 page. I think ReadTheDocs adoption is huge improvement, especially considering that new
+documentation, being clearly a better one, lacks some details that were covered in version 3.3.
+Having persistent, versioned and indexable documentation is very&amp;nbsp;helpful.&lt;/p&gt;
+&lt;p&gt;I think, it should be stated more or less directly that if one wants a framework to
+make application design decisions it&amp;#8217;s better off using something else, not CherryPy. Okay,
+here&amp;#8217;s Joe who knows enough about Python. He&amp;#8217;s conscious and is willing to make application design
+decisions and take responsibility for them. But he also has a deadline. Joe doesn&amp;#8217;t expect his
+first real-world CherryPy application to be shiny from experienced CherryPy developer point of
+view, albeit functional from end-user&amp;#8217;s. What&amp;#8217;s the best way to help Joe create functional
+prototype quickly, and let him gradually improve the design and codebase of his application
+thereafter, along with CherryPy&amp;nbsp;knowledge?&lt;/p&gt;
+&lt;p&gt;Let&amp;#8217;s look at CherryPy knowledge as a tree. Each branch represents a functionality. Say a CherryPy
+tool branch. As it goes from the root, there&amp;#8217;re nodes like &lt;em&gt;Copy-paste this decorator to turn your
+handler result into &lt;span class="caps"&gt;JSON&lt;/span&gt;&lt;/em&gt;, &lt;em&gt;What other tools are capable of?&lt;/em&gt;, &lt;em&gt;What is a CherryPy tool, and how
+to write one?&lt;/em&gt;, &lt;em&gt;Tool hook-points, types, priorities, etc.&lt;/em&gt;. The same is for other branches —
+from basic to advanced. And what will Joe benefit from the most is breadth-first traversing on the
+tree. Better if some of a few first levels are illustrated with runnable snippets. This way it&amp;#8217;s
+possible to give overview, tunable blocks of code and directions for improvement. For the later is
+important to spur creativity, but not enforcing design decisions, in the way: &lt;em&gt;start with this,
+improve by yourself&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;I&amp;#8217;ve just glanced over the latest documentation over again, and surprise, it narrates in very
+similar fashion! Sylvain has done a great job. But what is catching my eye is that there&amp;#8217;s two
+separate tutorial series now: one in the source code &lt;a class="footnote-reference" href="#id52" id="id24"&gt;[21]&lt;/a&gt;, another in the documentation &lt;a class="footnote-reference" href="#id53" id="id25"&gt;[22]&lt;/a&gt;.
+Even though both serve the same purpose, the former is much easier to maintain, covering with
+tests which leads to the bonus of better regression test suite. If the later&amp;#8217;s textual flexibility
+can be sacrificed for less maintenance cost, I think, it&amp;#8217;s possible to generate tutorial section
+from module docstrings and code, and merge the&amp;nbsp;two.&lt;/p&gt;
+&lt;p&gt;However, both series deal with simplest cases and there&amp;#8217;s a big gap between them and real-world
+application requirements. Here I also a snippet to base on directly or get ideas from to
+get a prototype faster, but with real-world tools. Like safe database access in threaded
+environment, &lt;span class="caps"&gt;URL&lt;/span&gt; routing and generation, multi-allplication design and so on. Sylvain&amp;#8217;s CherryPy
+recipes &lt;a class="footnote-reference" href="#id54" id="id26"&gt;[23]&lt;/a&gt; referred in the documentation several times may answer this to some extent, but in
+general I think it&amp;#8217;s still in question. But also whether it should maintained in centralized
+fashion within CherryPy. Or if it&amp;#8217;s more suitable for external source, like post on somebody&amp;#8217;s
+blog or&amp;nbsp;StackOverflow.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="contribution-packages"&gt;
+&lt;h3&gt;Contribution&amp;nbsp;packages&lt;/h3&gt;
+&lt;p&gt;I think Eric Larson&amp;#8217;s suggestion about &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;cherrypy-*&lt;/span&gt;&lt;/tt&gt; pageages makes sense. For example there&amp;#8217;s
+a package called cherrys &lt;a class="footnote-reference" href="#id55" id="id27"&gt;[24]&lt;/a&gt; which is the good example. It&amp;#8217;s a Redis adapter for
+CherryPy session handling. What&amp;#8217;s important it has clearly defined scope and doesn&amp;#8217;t affect
+an application design. This way it might have been named &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;cherrypy-redis-session&lt;/span&gt;&lt;/tt&gt;.&lt;/p&gt;
+&lt;p&gt;A package that is an implementaion of an CherryPy interface must be appropriate for packaging and
+sharing. Sharing a CherryPy application with clearly defined scope, like Dowser &lt;a class="footnote-reference" href="#id56" id="id28"&gt;[25]&lt;/a&gt;, is
+also&amp;nbsp;beneficial.&lt;/p&gt;
+&lt;p&gt;On the contrary specific tools or plugins that affect application design shouldn&amp;#8217;t be packaged.
+For instance, looking at Sylvain&amp;#8217;s recipes they are all better to say recipes. Let&amp;#8217;s look
+at Jinja2 recipe &lt;a class="footnote-reference" href="#id57" id="id29"&gt;[26]&lt;/a&gt;. Besides having a class per file isn&amp;#8217;t pythonic, and splitting a thing
+into plugin and tool isn&amp;#8217;t always rewarding, it makes certian assumtion on how template file
+names are defined for the &lt;span class="caps"&gt;URL&lt;/span&gt;. Jina2 is a flexible template engine with notion of template
+inheritance. Real-world projects have dozens of templates and tend to orgianize them by role
+and use. Having some convention-over-configuration rule for template name is very handy.
+So I want to say it&amp;#8217;s usually better to have a small and effiective application-specific
+CherryPy tool or plugin rather than trying to invent something overly broad and generic&amp;nbsp;one.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="other-changes"&gt;
+&lt;h3&gt;Other&amp;nbsp;changes&lt;/h3&gt;
+&lt;p&gt;Bitbucket pages should have either actual supplementing information or no supplementing
+information. Menu community link &lt;a class="footnote-reference" href="#id58" id="id30"&gt;[27]&lt;/a&gt; leads to wiki home page where version section has latest
+version of 3.2.5. Menu development link &lt;a class="footnote-reference" href="#id59" id="id31"&gt;[28]&lt;/a&gt;, which points to the repository overview page refers
+to Python 2.3, where the site&amp;#8217;s version starts with 2.5+. Referring &lt;tt class="docutils literal"&gt;python setup.py install&lt;/tt&gt; as
+installation command, which requires a manual download, ought to be changed to normal
+&lt;tt class="docutils literal"&gt;pip install cherrypy&lt;/tt&gt;.&lt;/p&gt;
+&lt;p&gt;I think, minor changes on the website are&amp;nbsp;needed:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;no need in download link in the&amp;nbsp;menu,&lt;/li&gt;
+&lt;li&gt;add &lt;em&gt;install&lt;/em&gt; section after &lt;em&gt;features&lt;/em&gt; which says &lt;tt class="docutils literal"&gt;pip install cherrypy&lt;/tt&gt;,&lt;/li&gt;
+&lt;li&gt;community link is better to refer to the user&amp;nbsp;group,&lt;/li&gt;
+&lt;li&gt;rename &lt;em&gt;online tests&lt;/em&gt;, change the service link, use better sentence which will emphasize&amp;nbsp;reliability.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;About &lt;tt class="docutils literal"&gt;_cp&lt;/tt&gt; module prefix. There&amp;#8217;re some public classes like &lt;tt class="docutils literal"&gt;cherrypy._cptools.HandlerTool&lt;/tt&gt;,
+which may be used in user code directly or as super classes. This isn&amp;#8217;t correct naming, according
+to the underscore convention. So it&amp;#8217;s a good idea to change it some day. Though as a PyDev user I
+can&amp;#8217;t recall to any issues with&amp;nbsp;it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="wrap-up"&gt;
+&lt;h2&gt;Wrap-up&lt;/h2&gt;
+&lt;p&gt;I can conclude that there&amp;#8217;re two things that I&amp;#8217;m seeing problematic: quality assurance for various
+claimed enviroments CherryPy to support and lack of contribution guiadance, specifically in the
+form of bug tracker supervisor. The rest feels normal, if that makes sense and as it is usually
+the case needs small constant improment and&amp;nbsp;polishing.&lt;/p&gt;
+&lt;hr class="docutils" /&gt;
+&lt;table class="docutils footnote" frame="void" id="id32" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[1]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id1"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id15"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://cherrypy.org/"&gt;http://cherrypy.org/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id33" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id2"&gt;[2]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/lT1cxovGyy8"&gt;https://groups.google.com/forum/#!topic/cherrypy-users/lT1cxovGyy8&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id34" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id3"&gt;[3]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/MjrIZ_jljRQ"&gt;https://groups.google.com/forum/#!topic/cherrypy-users/MjrIZ_jljRQ&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id35" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[4]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id4"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id13"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://nichol.as/benchmark-of-python-web-servers"&gt;http://nichol.as/benchmark-of-python-web-servers&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id36" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[5]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id5"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id18"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://stackoverflow.com/questions/tagged/cherrypy"&gt;http://stackoverflow.com/questions/tagged/cherrypy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id37" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id6"&gt;[6]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/wiki/ZenOfCherryPy"&gt;https://bitbucket.org/cherrypy/cherrypy/wiki/ZenOfCherryPy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id38" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id7"&gt;[7]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://www.python.org/dev/peps/pep-0020/"&gt;https://www.python.org/dev/peps/pep-0020/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id39" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id8"&gt;[8]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/issue/1331"&gt;https://bitbucket.org/cherrypy/cherrypy/issue/1331&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id40" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id9"&gt;[9]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://github.com/niwibe/django-sse"&gt;https://github.com/niwibe/django-sse&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id41" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id10"&gt;[10]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://lincolnloop.com/blog/architecting-realtime-applications/"&gt;https://lincolnloop.com/blog/architecting-realtime-applications/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id42" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id11"&gt;[11]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://stackoverflow.com/q/25845161/2072035"&gt;http://stackoverflow.com/q/25845161/2072035&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id43" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id12"&gt;[12]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://ws4py.readthedocs.org/"&gt;https://ws4py.readthedocs.org/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id44" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id14"&gt;[13]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://docs.python.org/2/howto/sockets.html#performance"&gt;https://docs.python.org/2/howto/sockets.html#performance&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id45" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id16"&gt;[14]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy-webapp-skeleton"&gt;https://bitbucket.org/saaj/cherrypy-webapp-skeleton&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id46" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id17"&gt;[15]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/qooxdoo-website-skeleton"&gt;https://bitbucket.org/saaj/qooxdoo-website-skeleton&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id47" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id20"&gt;[16]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/issue/1298"&gt;https://bitbucket.org/cherrypy/cherrypy/issue/1298&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id48" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id19"&gt;[17]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://blog.jaraco.com/2014/04/how-to-write-perfect-pull-request.html"&gt;http://blog.jaraco.com/2014/04/how-to-write-perfect-pull-request.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id49" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id21"&gt;[18]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://shiningpanda.com/shiningpanda-ci-clap-de-fin.html"&gt;http://shiningpanda.com/shiningpanda-ci-clap-de-fin.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id50" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id22"&gt;[19]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://readthedocs.org/builds/cherrypy"&gt;https://readthedocs.org/builds/cherrypy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id51" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id23"&gt;[20]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://drone.io/saaj/qooxdoo-cherrypy-json-rpc"&gt;https://drone.io/saaj/qooxdoo-cherrypy-json-rpc&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id52" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id24"&gt;[21]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/src/tip/cherrypy/tutorial/?at=default"&gt;https://bitbucket.org/cherrypy/cherrypy/src/tip/cherrypy/tutorial/?at=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id53" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id25"&gt;[22]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://cherrypy.readthedocs.org/en/latest/tutorials.html"&gt;http://cherrypy.readthedocs.org/en/latest/tutorials.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id54" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id26"&gt;[23]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/Lawouach/cherrypy-recipes"&gt;https://bitbucket.org/Lawouach/cherrypy-recipes&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id55" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id27"&gt;[24]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://pypi.python.org/pypi/cherrys"&gt;https://pypi.python.org/pypi/cherrys&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id56" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id28"&gt;[25]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.aminus.net/wiki/Dowser"&gt;http://www.aminus.net/wiki/Dowser&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id57" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id29"&gt;[26]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/Lawouach/cherrypy-recipes/src/tip/web/templating/jinja2_templating/?at=default"&gt;https://bitbucket.org/Lawouach/cherrypy-recipes/src/tip/web/templating/jinja2_templating/?at=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id58" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id30"&gt;[27]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/wiki/Home"&gt;https://bitbucket.org/cherrypy/cherrypy/wiki/Home&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id59" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id31"&gt;[28]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/cherrypy/cherrypy/overview"&gt;https://bitbucket.org/cherrypy/cherrypy/overview&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+</content><category term="cherrypy"></category><category term="python"></category><category term="future"></category></entry><entry><title>Qooxdoo “next” and targeting website development</title><link href="http://recollection.saaj.me/article/qooxdoo-next-and-targeting-website-development.html" rel="alternate"></link><published>2014-12-08T00:00:00+01:00</published><updated>2014-12-08T00:00:00+01:00</updated><author><name>saaj</name></author><id>tag:recollection.saaj.me,2014-12-08:/article/qooxdoo-next-and-targeting-website-development.html</id><summary type="html">&lt;p&gt;Initially, this post was meant to be an open letter to Martin Wittemann, an urge to do not break the only
+robust and consistent JavaScript development environment, in sense of bug #8618 [1]. How robust and
+consistent? Most importantly it is&amp;nbsp;about:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Code structure: modern feature-rich object model with properties, events, interfaces, mixins and more,
+namespace tree,&amp;nbsp;data-binding,&lt;/li&gt;
+&lt;li&gt;Dependency management: automatic and transparent dependency resolution, component&amp;nbsp;packaging,&lt;/li&gt;
+&lt;li&gt;Deployment: code optimisation, single- and multi-part&amp;nbsp;builds,&lt;/li&gt;
+&lt;li&gt;Standard library: i18n, &lt;span class="caps"&gt;CLDR&lt;/span&gt;, high level &lt;span class="caps"&gt;BOM&lt;/span&gt; &lt;span class="caps"&gt;API&lt;/span&gt;, normalised events, normalised ECMAScript, test
+infrastructure, &lt;span class="caps"&gt;API&lt;/span&gt; documentation, feature&amp;nbsp;detection.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All this comes out-of-the-box, builds layer on layer, is seamlessly integrated and handed to an end developer
+on a silver platter. The codebase is one of the best quality I have ever seen. It is readable,
+comprehensible, possible to extend, and is a huge a knowledge resource per se. And note, I am talking about
+tools and environment, not &lt;span class="caps"&gt;UI&lt;/span&gt;. Like former Qooxdoo developer, Fabian Jakobs, stated in one of his
+presentations [2]:&lt;/p&gt;
+&lt;blockquote&gt;
+Don’t just look at the widgets, look at the development tools as well.&lt;/blockquote&gt;
+&lt;p&gt;Luckily, as was recently stated in &lt;em&gt;Website fundamentals: next challenges&lt;/em&gt; [3], the “next” (branch and then a
+separate repo [4]; later referenced Next) turned out to be a experimental website-oriented fork of Qooxdoo,
+which doesn’t mean to be merged back to Qooxdoo. At least any time soon. Panic is soothed, impending doom
+doesn’t overhang the good times. It’s time to dissect and&amp;nbsp;discuss.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Initially, this post was meant to be an open letter to Martin Wittemann, an urge to do not break the only
+robust and consistent JavaScript development environment, in sense of bug #8618 &lt;a class="footnote-reference" href="#id22" id="id1"&gt;[1]&lt;/a&gt;. How robust and
+consistent? Most importantly it is&amp;nbsp;about:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Code structure: modern feature-rich object model with properties, events, interfaces, mixins and more,
+namespace tree,&amp;nbsp;data-binding,&lt;/li&gt;
+&lt;li&gt;Dependency management: automatic and transparent dependency resolution, component&amp;nbsp;packaging,&lt;/li&gt;
+&lt;li&gt;Deployment: code optimisation, single- and multi-part&amp;nbsp;builds,&lt;/li&gt;
+&lt;li&gt;Standard library: i18n, &lt;span class="caps"&gt;CLDR&lt;/span&gt;, high level &lt;span class="caps"&gt;BOM&lt;/span&gt; &lt;span class="caps"&gt;API&lt;/span&gt;, normalised events, normalised ECMAScript, test
+infrastructure, &lt;span class="caps"&gt;API&lt;/span&gt; documentation, feature&amp;nbsp;detection.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All this comes out-of-the-box, builds layer on layer, is seamlessly integrated and handed to an end developer
+on a silver platter. The codebase is one of the best quality I have ever seen. It is readable,
+comprehensible, possible to extend, and is a huge a knowledge resource per se. And note, I am talking about
+tools and environment, not &lt;span class="caps"&gt;UI&lt;/span&gt;. Like former Qooxdoo developer, Fabian Jakobs, stated in one of his
+presentations &lt;a class="footnote-reference" href="#id23" id="id2"&gt;[2]&lt;/a&gt;:&lt;/p&gt;
+&lt;blockquote&gt;
+Don’t just look at the widgets, look at the development tools as well.&lt;/blockquote&gt;
+&lt;p&gt;Luckily, as was recently stated in &lt;em&gt;Website fundamentals: next challenges&lt;/em&gt; &lt;a class="footnote-reference" href="#id24" id="id3"&gt;[3]&lt;/a&gt;, the “next” (branch and then a
+separate repo &lt;a class="footnote-reference" href="#id25" id="id4"&gt;[4]&lt;/a&gt;; later referenced Next) turned out to be a experimental website-oriented fork of Qooxdoo,
+which doesn’t mean to be merged back to Qooxdoo. At least any time soon. Panic is soothed, impending doom
+doesn’t overhang the good times. It’s time to dissect and&amp;nbsp;discuss.&lt;/p&gt;
+
+&lt;div class="section" id="the-bug-report"&gt;
+&lt;h2&gt;The bug&amp;nbsp;report&lt;/h2&gt;
+&lt;p&gt;What was meant to break? The bug report mandated to rewrite Qooxdoo test infrastructure with callback
+spaghetti of mocha.js. Callback spaghetti?! When most code structure is a callback in callback in callback
+and so on, with the state expressed in free closure variables spanning across nesting levels, it is a
+callback spaghetti. And for average JavaScript code out there this structure practice is very common, which
+is nothing good though, but for Qooxdoo it might have been an awful decision, replacing clean,
+object-oriented code with that. But since Next is not Qooxdoo it may depend on some&amp;nbsp;factors.&lt;/p&gt;
+&lt;p&gt;In the report Martin&amp;nbsp;told:&lt;/p&gt;
+&lt;blockquote&gt;
+There has been some hard decisions for me to take lately but I&amp;#8217;m still convinced that not trying to be
+the expert for everything gives us the opportunity to focus on our strengths.&lt;/blockquote&gt;
+&lt;p&gt;And listed some features that supposedly impressed&amp;nbsp;him:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;pretty&amp;nbsp;printing,&lt;/li&gt;
+&lt;li&gt;scaffolding over to &lt;span class="caps"&gt;XML&lt;/span&gt;&amp;nbsp;handling,&lt;/li&gt;
+&lt;li&gt;Levenshtein distance&amp;nbsp;calculation,&lt;/li&gt;
+&lt;li&gt;&lt;span class="caps"&gt;GUI&lt;/span&gt;&amp;nbsp;toolkits.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;First is simple, second is needed only for recorded tests (e.g. Selenium), third is already there with
+&lt;tt class="docutils literal"&gt;qx.util.EditDistance&lt;/tt&gt;. And forth is quite a thing Qooxdoo was made for. So these features are kind of
+false&amp;nbsp;argument.&lt;/p&gt;
+&lt;p&gt;Moreover, &lt;tt class="docutils literal"&gt;mocha.js&lt;/tt&gt; is 5k &lt;span class="caps"&gt;SLOC&lt;/span&gt;, &lt;tt class="docutils literal"&gt;qx.dev.unit&lt;/tt&gt; is 4.4k &lt;span class="caps"&gt;SLOC&lt;/span&gt;, &lt;tt class="docutils literal"&gt;testrunner&lt;/tt&gt; is 3.9k &lt;span class="caps"&gt;SLOC&lt;/span&gt;. Including these
+numbers and taking into account more expressive Qooxdoo code, either Martin is trading more for less, or it
+is just an expensive&amp;nbsp;experiment.&lt;/p&gt;
+&lt;p&gt;Anyway framework consistency is absolutely a strength. Test code is a canonical source of thruth about an &lt;span class="caps"&gt;API&lt;/span&gt;.
+Test code is required for maintaining a complex application (which most websites are not though). And test
+infrastructure should not be compared to a disposal widget like &lt;tt class="docutils literal"&gt;qx.ui.embed.HtmlArea&lt;/tt&gt; which wasn’t quality
+in first place, required special knowledge to maintain, and most importantly it isn’t hard create a wrapper
+for TinyMCE implementing &lt;tt class="docutils literal"&gt;qx.ui.form.IStringForm&lt;/tt&gt; and &lt;tt class="docutils literal"&gt;qx.ui.form.IForm&lt;/tt&gt;. Since that moment it is
+transparent and seamlessly integrated. Making test code an alien in a framework, makes it seamful,
+inconsistent, and what is worst can discourage developers from writing tests. Well, of course unless all the
+rest code is the&amp;nbsp;spaghetti.&lt;/p&gt;
+&lt;p&gt;Last note here is how framework consistency from language perspective changes in the course of recent time.
+Qooxdoo &lt;tt class="docutils literal"&gt;branch_3_0_x&lt;/tt&gt; roughly has nothing but Qooxdoo JavaScript code for a browser and Python code for
+generator. Next has Qooxdoo JavaScript code and mocha.js callback spaghetti test code for a browser, CommonJS
+code for generator that varies being object-oriented prototypal code, procedural code, and Qooxdoo
+object-oriented code, which also doesn’t exclude some Python code still necessary for new generator to
+function. So what’s clear, having hard time maintaining this is one of likely&amp;nbsp;outcomes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="goals"&gt;
+&lt;h2&gt;Goals&lt;/h2&gt;
+&lt;p&gt;Andreas Ecker wrote in the post &lt;a class="footnote-reference" href="#id24" id="id5"&gt;[3]&lt;/a&gt;, that they
+&lt;em&gt;have been looking into the challenges of a more lightweight,  website-oriented approach to web applications&lt;/em&gt;.
+Sounds quite ambiguous and curious at the same time. Lightweight in byte size? Website-oriented in a
+non-widget &lt;span class="caps"&gt;UI&lt;/span&gt;? At the same time, it sounds as odd as arithmetic approach to differential equations. Then he&amp;nbsp;expanded:&lt;/p&gt;
+&lt;blockquote&gt;
+Reasons are two-fold: primarily, we are involved in company-internal projects in that very domain.
+Secondly, by touching core components of qooxdoo we can experiment with benefits of web technologies and
+concepts available today.&lt;/blockquote&gt;
+&lt;p&gt;First thing, considering 1&amp;amp;1’s “very domain”, is probably something like Amazon &lt;span class="caps"&gt;AWS&lt;/span&gt; management &lt;span class="caps"&gt;UI&lt;/span&gt;. A
+web-application which spans multiple pages, where each page has some &lt;span class="caps"&gt;HTML&lt;/span&gt; from server and complementing
+JavaScript code. So it may be looked at as a “website-oriented approach”. Second thing again points to an&amp;nbsp;experiment.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="qxweb"&gt;
+&lt;h2&gt;qxWeb&lt;/h2&gt;
+&lt;p&gt;Qooxdoo targets websites since 2.0 which was released in June 2012 &lt;a class="footnote-reference" href="#id26" id="id6"&gt;[5]&lt;/a&gt;. Initially I was enthusiastic about
+qxWeb, I thought it’ll be another virtue of the framework, and I still think the idea to target websites is
+right as even at mid-scale they benefit from most of Qooxdoo non-&lt;span class="caps"&gt;UI&lt;/span&gt; features. But the design and development
+of qxWeb seems to me misguided and mostly pointless&amp;nbsp;now.&lt;/p&gt;
+&lt;p&gt;A year after qxWeb release, the time I was looking at it from various angles, trying to find its strength and
+way to integrate it in my flow to make it handle infrastructure task I used to handle with Qooxdoo in case of
+web application, I submitted the bug report &lt;a class="footnote-reference" href="#id27" id="id7"&gt;[6]&lt;/a&gt; that proposes design that enables website development with
+Qooxdoo (native application type &lt;a class="footnote-reference" href="#id35" id="id8"&gt;[14]&lt;/a&gt;), points qxWeb shortcomings and its possible shortcut-purpose, and the
+problems to be solved for normal operation. The biggest problem with qxWeb is that it wasn’t designed to be a
+Qooxdoo thing, but rather be jQuery with &lt;span class="caps"&gt;API&lt;/span&gt; done right. Long story told short: it’s not for writing an
+application, it’s for scribbling ad hoc per page scripts. And I would prefer qxWeb over jQuery for writing
+one-off script, but in general jQuery is de facto standard in &lt;span class="caps"&gt;DOM&lt;/span&gt; patching and I don’t see any significant
+niche for qxWeb as yet another &lt;span class="caps"&gt;DOM&lt;/span&gt; patcher plus this and that. Moreover even for shortcut-purpose in a
+Qooxdoo application, qxWeb is still an alien, because it needs manual dependency declaration for its
+“modules”. Qooxdoo way of &lt;span class="caps"&gt;DOM&lt;/span&gt; patching was &lt;tt class="docutils literal"&gt;qx.bom.Collection&lt;/tt&gt; &lt;a class="footnote-reference" href="#id28" id="id9"&gt;[7]&lt;/a&gt;, removed in version 3.0. I think it was
+a&amp;nbsp;mistake.&lt;/p&gt;
+&lt;p&gt;Starting with Qooxdoo 3.5 &lt;a class="footnote-reference" href="#id29" id="id10"&gt;[8]&lt;/a&gt;, there was an addition to qxWeb. Since then it supported low-level widgets.
+Such widget expects certain &lt;span class="caps"&gt;HTML&lt;/span&gt; structure and classes, which later is animated on widget instance
+construction. Basically, qxWeb started to mimic jQueryUI as well, not just jQuery. Not that I want to say
+it’s useless, but rather it’s reinvention of the wheel, reimplementation of a task that was already
+implemented long ago, and all who wanted such functionality already have it at hand. What’s worse the
+reimplementation is being done with outdated technology. &lt;span class="caps"&gt;DOM&lt;/span&gt; binding, &lt;span class="caps"&gt;MVVM&lt;/span&gt; &lt;a class="footnote-reference" href="#id30" id="id11"&gt;[9]&lt;/a&gt;, libraries emerged in
+2009-2010, and at the moment of Qooxdoo 3.5 release, late 2013, were a commodity, as well as understanding
+that a lot of manual &lt;span class="caps"&gt;DOM&lt;/span&gt; patching is a chore, that can be automated with a view model. Bug #8101 &lt;a class="footnote-reference" href="#id31" id="id12"&gt;[10]&lt;/a&gt; lead
+me to working KnockoutJS &lt;a class="footnote-reference" href="#id32" id="id13"&gt;[11]&lt;/a&gt; adapter for Qooxdoo, but at the framework side it didn’t gain traction, except
+that Martin confirmed importance of the topic, and that also it’s the topic of his master thesis &lt;a class="footnote-reference" href="#id33" id="id14"&gt;[12]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;I want to summarise this section quoting Martin’s &lt;em&gt;focus on our strengths&lt;/em&gt;. How the whole thing looks to me
+now, is that in area of website development Qooxdoo team tries to avoid its strengths at all costs. No build
+tools, no view model, no application design having great tools, data layer and application design experience.
+Instead Qooxdoo team is toying a&amp;nbsp;jQuery/jQueryUI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="a-qooxdoo-website-today"&gt;
+&lt;h2&gt;A Qooxdoo website&amp;nbsp;today&lt;/h2&gt;
+&lt;p&gt;Even though initial changes in Next doesn’t seem anything promising, I’m interested what the experiment may
+yield. But to address the need of a robust development environment for a website today I want to point again
+to the bug #7481 &lt;a class="footnote-reference" href="#id27" id="id15"&gt;[6]&lt;/a&gt; and its proof of concept project &lt;a class="footnote-reference" href="#id34" id="id16"&gt;[13]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Eventually all blocking bugs for #7481 were resolved and a Qooxdoo native application &lt;a class="footnote-reference" href="#id35" id="id17"&gt;[14]&lt;/a&gt; since 3.5.1 was
+already fine as a basis for a website codebase. From my side I’ve been experimenting with the approach on a
+few real websites and result are good. When all website’s JavaScript code is centralised, it really starts to
+feel like an application, thusly significantly improving maintainability. Late autumn 2014 I’ve written
+documentation for the project, backported minor improvements and made it&amp;nbsp;standalone.&lt;/p&gt;
+&lt;p&gt;qooxdoo-website-skeleton &lt;a class="footnote-reference" href="#id34" id="id18"&gt;[13]&lt;/a&gt; is a mixture of a tutorial and skeleton. Because initial configuration is
+tricky, when starting from a scratch with native application, it’s easier to fork and remove a few unused
+files. Here I would like to tell about two aspects that Andreas pointed to (see above), and for the rest
+you can follow the link. First, a website approach to &lt;span class="caps"&gt;UI&lt;/span&gt; here is to provide a choice. One can use qxWeb
+&lt;span class="caps"&gt;DOM&lt;/span&gt; patching facilities or qxWeb widgets. One can use KnockoutJS adapter and use Qooxdoo data models as
+view models (&lt;span class="caps"&gt;MVVM&lt;/span&gt;). There’s also no restriction for using jQuery or KnockoutJS as is or whatever it makes
+sense to&amp;nbsp;use.&lt;/p&gt;
+&lt;p&gt;Second, is being lightweight. Without external libraries Qooxdoo native application build with basic qxWeb
+modules is over 100 kB gzipped. For example boot part for the project is 361/110 kB (optimised/&lt;tt class="docutils literal"&gt;gzip &lt;span class="pre"&gt;-6&lt;/span&gt;&lt;/tt&gt;).
+I would agree it is a little too much for a website yesterday, but today I don’t see this concern reasonable.
+Here are three hello pages for popular social websites requested from desktop&amp;nbsp;Firefox.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="43%" /&gt;
+&lt;col width="29%" /&gt;
+&lt;col width="29%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;website&lt;/th&gt;
+&lt;th class="head"&gt;size, kB&lt;/th&gt;
+&lt;th class="head"&gt;requests&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;twitter.com&lt;/td&gt;
+&lt;td&gt;156&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;linkedin.com&lt;/td&gt;
+&lt;td&gt;180&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;facebook.com&lt;/td&gt;
+&lt;td&gt;615&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;And here are home pages for big e-commerce&amp;nbsp;websites.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="41%" /&gt;
+&lt;col width="30%" /&gt;
+&lt;col width="30%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;website&lt;/th&gt;
+&lt;th class="head"&gt;size, kB&lt;/th&gt;
+&lt;th class="head"&gt;requests&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;ebay.com&lt;/td&gt;
+&lt;td&gt;114&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;alibaba.com&lt;/td&gt;
+&lt;td&gt;143&lt;/td&gt;
+&lt;td&gt;7&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;amazon.com&lt;/td&gt;
+&lt;td&gt;560&lt;/td&gt;
+&lt;td&gt;30&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;These show that having roughly over 100 kB is a norm today. And if further optimisation of Next will go as
+feature-size trade-off, then it wouldn’t probably make&amp;nbsp;sense.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="epilogue"&gt;
+&lt;h2&gt;Epilogue&lt;/h2&gt;
+&lt;p&gt;Before official announcement Next’s bug #8618 was in line with other dubious decisions taken since Qooxdoo
+3.5. Before 3.5 I could agree to virtually every decision taken by the team, as there was clear reason,
+argument and pragmatic approach&amp;nbsp;overall.&lt;/p&gt;
+&lt;p&gt;Now it’s mixed. There’s still fundamental work like migration to pointer events, but also several other topics
+that look like a waste of time. Like what? Like rewriting the generator to NodeJS and GruntJS &lt;a class="footnote-reference" href="#id36" id="id19"&gt;[15]&lt;/a&gt;.
+Surprise! There’s ongoing shift to gulp.js and GruntJS is no longer cool JavaScript thiggie. And I’m curious
+to see how Qooxdoo team will handle such situations in general. Fancy toys change in the public sandbox fast
+&lt;a class="footnote-reference" href="#id38" id="id20"&gt;[17]&lt;/a&gt;. Will you try to catch up every new cool replacement or will maintain an unpopular&amp;nbsp;one?&lt;/p&gt;
+&lt;p&gt;Like, unconditional &lt;span class="caps"&gt;RESOLVED&lt;/span&gt; &lt;span class="caps"&gt;NEVER&lt;/span&gt; &lt;a class="footnote-reference" href="#id37" id="id21"&gt;[16]&lt;/a&gt; set to all old bug. No prioritization, there is no past, the future&amp;#8217;s
+so bright. The team briefly state something about turning to an agile development, and happily turned to
+developing new features. And of course, no doubt developing features is fun, &lt;span class="caps"&gt;PR&lt;/span&gt; is easier with less open
+bugs, and resources are always limited. But when new developers stumble the same bugs again and re-report
+them, it is a failure. I don’t really understand it, so since that change I’m just discouraged to file new
+bug and I don’t. If no one fixes them, and it takes time to analyse, make it reproducible and propose a
+solution, I probably shouldn&amp;#8217;t,&amp;nbsp;right?&lt;/p&gt;
+&lt;p&gt;I can whine more, but I want to point to two origins of priorities. It’s understanding the scope and
+understanding the users. First, is &lt;em&gt;a universal JavaScript framework&lt;/em&gt;. How universal? And what is JavaScript
+here? JavaScript like in Netscape? Or like ECMAScript in NodeJS? Should we expect Qooxdoo approach to &lt;span class="caps"&gt;URL&lt;/span&gt;
+routing or database connection pooling? In second, I see opposite sides. One commenters in various places
+complain that Qooxdoo &lt;em&gt;doesn’t play well with JavaScript ecosystem&lt;/em&gt;. I don’t think they are Qooxdoo users at
+all, but ones who couldn&amp;#8217;t handle it. You know, you can’t do your Qooxdoo work copy-pasting from
+StackOverflow, you can do jQuery work this way. On the other side are users, including me, who&amp;nbsp;say:&lt;/p&gt;
+&lt;blockquote&gt;
+Dear Qooxdoo, we don’t really give a damn about JavaScript ecosystem, you are our only concern. We come
+from various established application development platforms, in sense “Swing/qt/Cocoa for the web”.  We
+value design and maintainability. Please, keep on avoiding us from it.&lt;/blockquote&gt;
+&lt;p&gt;That is to say. I’m an optimist, and there’s nothing parallel to Qooxdoo. So I hope the team won’t forget its
+strengths and its users, and will keep on the path of solving real&amp;nbsp;problems.&lt;/p&gt;
+&lt;hr class="docutils" /&gt;
+&lt;table class="docutils footnote" frame="void" id="id22" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id1"&gt;[1]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=8618"&gt;http://bugzilla.qooxdoo.org/show_bug.cgi?id=8618&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id23" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id2"&gt;[2]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.slideshare.net/fjakobs/masterin-large-scale-java-script-applications"&gt;http://www.slideshare.net/fjakobs/masterin-large-scale-java-script-applications&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id24" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[3]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id3"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id5"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://news.qooxdoo.org/website-fundamentals-next-challenges"&gt;http://news.qooxdoo.org/website-fundamentals-next-challenges&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id25" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id4"&gt;[4]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://github.com/qooxdoo/next"&gt;http://github.com/qooxdoo/next&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id26" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id6"&gt;[5]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://news.qooxdoo.org/qooxdoo-2-0-released"&gt;http://news.qooxdoo.org/qooxdoo-2-0-released&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id27" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[6]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id7"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id15"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=7481"&gt;http://bugzilla.qooxdoo.org/show_bug.cgi?id=7481&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id28" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id9"&gt;[7]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://demo.qooxdoo.org/2.0.4/apiviewer/#qx.bom.Collection"&gt;http://demo.qooxdoo.org/2.0.4/apiviewer/#qx.bom.Collection&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id29" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id10"&gt;[8]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://news.qooxdoo.org/qooxdoo-3-5-released"&gt;http://news.qooxdoo.org/qooxdoo-3-5-released&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id30" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id11"&gt;[9]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Model_View_ViewModel"&gt;http://en.wikipedia.org/wiki/Model_View_ViewModel&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id31" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id12"&gt;[10]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://bugzilla.qooxdoo.org/show_bug.cgi?id=8101"&gt;http://bugzilla.qooxdoo.org/show_bug.cgi?id=8101&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id32" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id13"&gt;[11]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://knockoutjs.com/"&gt;http://knockoutjs.com/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id33" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id14"&gt;[12]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.slideshare.net/wittemann/data-binding-in-qooxdoo"&gt;http://www.slideshare.net/wittemann/data-binding-in-qooxdoo&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id34" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[13]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id16"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id18"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://bitbucket.org/saaj/qooxdoo-website-skeleton"&gt;https://bitbucket.org/saaj/qooxdoo-website-skeleton&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id35" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[14]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id8"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id17"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://manual.qooxdoo.org/3.5.1/pages/development/skeletons.html#native"&gt;http://manual.qooxdoo.org/3.5.1/pages/development/skeletons.html#native&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id36" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id19"&gt;[15]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://news.qooxdoo.org/tool-chain-the-next-step"&gt;http://news.qooxdoo.org/tool-chain-the-next-step&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id37" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id21"&gt;[16]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.eclipsezone.com/eclipse/forums/t83053.html"&gt;http://www.eclipsezone.com/eclipse/forums/t83053.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id38" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id20"&gt;[17]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://readwrite.com/2014/12/04/node-js-fork-io-js"&gt;http://readwrite.com/2014/12/04/node-js-fork-io-js&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+</content><category term="qooxdoo"></category><category term="javascript"></category><category term="future"></category></entry></feed>

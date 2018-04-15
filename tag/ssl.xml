@@ -1,0 +1,1499 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Recollection - ssl</title><link href="http://recollection.saaj.me/" rel="alternate"></link><link href="http://recollection.saaj.me/tag/ssl.xml" rel="self"></link><id>http://recollection.saaj.me/</id><updated>2015-04-23T00:00:00+02:00</updated><entry><title>CherryPy questions: testing, SSL and Docker</title><link href="http://recollection.saaj.me/article/cherrypy-questions-testing-ssl-and-docker.html" rel="alternate"></link><published>2015-04-23T00:00:00+02:00</published><updated>2015-04-23T00:00:00+02:00</updated><author><name>saaj</name></author><id>tag:recollection.saaj.me,2015-04-23:/article/cherrypy-questions-testing-ssl-and-docker.html</id><summary type="html">&lt;p&gt;Basically this is a CherryPy work-in-progress article. However, it aims to draw the line
+with testing infrastructure I was working on, as it seems to be completed. The article
+covers what has been done and what issues I met along the way of reviving the test suite
+to serve its purpose. The way is not traversed fully of course and there&amp;#8217;s a lot left to
+do. It also seeks to justify concerns about CherryPy &lt;span class="caps"&gt;SSL&lt;/span&gt; functionality&amp;#8217;s correctness and
+viability. As well, it tries to answer appeared questions about official Docker image and
+its range of&amp;nbsp;application.&lt;/p&gt;
+</summary><content type="html">&lt;p&gt;Basically this is a CherryPy work-in-progress article. However, it aims to draw the line
+with testing infrastructure I was working on, as it seems to be completed. The article
+covers what has been done and what issues I met along the way of reviving the test suite
+to serve its purpose. The way is not traversed fully of course and there&amp;#8217;s a lot left to
+do. It also seeks to justify concerns about CherryPy &lt;span class="caps"&gt;SSL&lt;/span&gt; functionality&amp;#8217;s correctness and
+viability. As well, it tries to answer appeared questions about official Docker image and
+its range of&amp;nbsp;application.&lt;/p&gt;
+
+&lt;div class="contents topic" id="contents"&gt;
+&lt;p class="topic-title first"&gt;Contents&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#testing" id="id123"&gt;Testing&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-determinism" id="id124"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-dependency" id="id125"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#test-isolation" id="id126"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#testing-progress" id="id127"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#tagged-tox-configuration" id="id128"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#tackling-entropy-of-threading-and-in-process-server-juggling" id="id129"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#status-indication" id="id130"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#drawing-the-line" id="id131"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#ssl" id="id132"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#experiment" id="id133"&gt;Experiment&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#problem" id="id134"&gt;Problem&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#plan" id="id135"&gt;Plan&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#docker" id="id136"&gt;Docker&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#nature" id="id137"&gt;Nature&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#application" id="id138"&gt;Application&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference internal" href="#questions" id="id139"&gt;Questions&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="testing"&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id123"&gt;Testing&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;As was discovered in &lt;a class="reference external" href="http://recollection.saaj.me/article/future-of-cherrypy-bright-and-shiny.html"&gt;Future of CherryPy&lt;/a&gt; quality
+assurance was a glaring problem. After I volunteered and started working on putting
+tests back in the right way, I&amp;#8217;ve discovered several testing methodological errors that were
+made along in years of CherryPy existence. Also, back in the day CherryPy had its own test
+runner and later survived migration to Nose, but lost &lt;span class="caps"&gt;SSL&lt;/span&gt; tests. Not that the tests were purged
+away from the codebase, but werern&amp;#8217;t possible to be run automatically and required a tester
+to change code to run tests with &lt;span class="caps"&gt;SSL&lt;/span&gt;. Obviously no one did it, and it led to several issues
+that rendered &lt;span class="caps"&gt;SSL&lt;/span&gt; functionality broken. Actually it still is, as at the moment of writing
+in latest CherryPy release, 3.6, &lt;span class="caps"&gt;SSL&lt;/span&gt; doesn&amp;#8217;t&amp;nbsp;work.&lt;/p&gt;
+&lt;p&gt;Besides testing issues, there were issues with CherryPy functionality as such. For instance,
+session file locking didn&amp;#8217;t seem to be tested on machines with more than one execution unit.
+This way session locks didn&amp;#8217;t work all the time on machines with a multi-core &lt;span class="caps"&gt;CPU&lt;/span&gt;.&lt;/p&gt;
+&lt;blockquote&gt;
+You may be confused to think that as long as there is &lt;span class="caps"&gt;GIL&lt;/span&gt; &lt;a class="footnote-reference" href="#id67" id="id1"&gt;[1]&lt;/a&gt;, you shouldn&amp;#8217;t care about number
+of CPUs. Unfortunately, serial execution doesn&amp;#8217;t mean execution in one certain order. Thus on
+different number of execution units and on different &lt;span class="caps"&gt;GIL&lt;/span&gt; implementations (Python 3.2 has new
+&lt;span class="caps"&gt;GIL&lt;/span&gt; &lt;a class="footnote-reference" href="#id68" id="id2"&gt;[2]&lt;/a&gt;) a threaded Python program will likely behave differently.&lt;/blockquote&gt;
+&lt;p&gt;I&amp;#8217;ve fixed file locking by postponing lock file removal to a cleanup process. Briefly covering
+issues with other session backends is to say Postgres session backend was decided to be removed
+because it was broken, untested and mostly undocumented. Memcached session backend was mostly
+fine, except some minor &lt;tt class="docutils literal"&gt;str&lt;/tt&gt;/&lt;tt class="docutils literal"&gt;bytes&lt;/tt&gt; issue in &lt;em&gt;py3&lt;/em&gt; and the fact it isn&amp;#8217;t very useful in
+its current condition. The problem is that it doesn&amp;#8217;t implement distributed locking, so once you
+have two or more CherryPy instances that use a Memcached server as a session backend and your
+users are not distributed consistently across the instances, all sorts of concurrent update
+issues may&amp;nbsp;raise.&lt;/p&gt;
+&lt;p&gt;Substantial methodological errors in the test suite&amp;nbsp;were:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;test&amp;nbsp;determinism&lt;/li&gt;
+&lt;li&gt;test&amp;nbsp;dependency&lt;/li&gt;
+&lt;li&gt;test&amp;nbsp;isolation&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="section" id="test-determinism"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id124"&gt;Test&amp;nbsp;determinism&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;There were garbage collection tests that were automatically added to every subclass of
+&lt;tt class="docutils literal"&gt;test.helper.CPWebCase&lt;/tt&gt;. They are non-deterministic and fail sporadically (there are
+other normal tests that have non-deterministic behaviour, see below). Because CPython&amp;#8217;s reference
+counting garbage collector is deterministic, it&amp;#8217;s a concurrency issue. What was really surprising
+for me hear was explanation like, okay, if it has failed run it once again until you&amp;#8217;re sure that
+the failure persists. This &lt;tt class="docutils literal"&gt;test_gc&lt;/tt&gt; supplementing is disabled now until everything else is
+resolved, and it is clear how to handle it&amp;nbsp;properly.&lt;/p&gt;
+&lt;p&gt;Another thing that prevented certain classification to &lt;em&gt;pass&lt;/em&gt; and &lt;em&gt;fail&lt;/em&gt; and led to frequent
+freezes were request retries and absence of &lt;span class="caps"&gt;HTTP&lt;/span&gt; client&amp;#8217;s socket timeout. I can only guess about
+the original reasons of such &amp;#8220;carefulness&amp;#8221; and not letting a test just fail. For instance, you can
+take some of concurrency tests that throw out up to a hundred client threads and imagine stability
+and predictability of the undertaking with 10 retires and no client timeout. These two were
+also fixed &amp;#8212; &lt;tt class="docutils literal"&gt;test.webtest.openURL&lt;/tt&gt; doesn&amp;#8217;t retry on socket errors and sets 10-second timeout
+to its &lt;span class="caps"&gt;HTTP&lt;/span&gt; connections by&amp;nbsp;default.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;tt class="docutils literal"&gt;test.helper.CPWebCase&lt;/tt&gt; starts full in-process CherryPy server and then uses real
+&lt;tt class="docutils literal"&gt;httplib.HTTPConnection&lt;/tt&gt; to connect to it. Most of CherryPy tests are in fact either
+integration &lt;a class="footnote-reference" href="#id69" id="id3"&gt;[3]&lt;/a&gt; or system tests &lt;a class="footnote-reference" href="#id70" id="id4"&gt;[4]&lt;/a&gt;.&lt;/blockquote&gt;
+&lt;/div&gt;
+&lt;div class="section" id="test-dependency"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id125"&gt;Test&amp;nbsp;dependency&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;How do you like tests named like &lt;tt class="docutils literal"&gt;test_0_check_something&lt;/tt&gt;, &lt;tt class="docutils literal"&gt;test_1_check_something_else&lt;/tt&gt;, and
+so on? And what if they were named this way intentionally, so they run in order, and fail
+otherwise because latter depend on former. Specifically, you can not run test individually. All
+occurrence I&amp;#8217;ve found were renamed and freed from sibling&amp;nbsp;shackles.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="test-isolation"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id126"&gt;Test&amp;nbsp;isolation&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;&lt;tt class="docutils literal"&gt;test.helper.CPWebCase&lt;/tt&gt;&amp;#8216;s server startup routine was made in equivalent of &lt;tt class="docutils literal"&gt;unittest&lt;/tt&gt;&amp;#8216;s
+&lt;tt class="docutils literal"&gt;setUpClass&lt;/tt&gt;, so tests in a test case were not isolated from each other, which made it
+problematic to deal with the case of tests that interfere with internals as it was really
+hard to say whether such test has failed on its own or as a consequence. I&amp;#8217;ve added
+&lt;tt class="docutils literal"&gt;per_test_setup&lt;/tt&gt; attribute to &lt;tt class="docutils literal"&gt;CPWebCase&lt;/tt&gt; to conditionally do the routine in &lt;tt class="docutils literal"&gt;setUp&lt;/tt&gt;
+and accommodated tests&amp;#8217; code. I apprehended significant performance degradation, but it has just
+become around 20% slower, which was the reason for me to make it true by default. Not sure,
+maybe it should&amp;#8217;t exist at all&amp;nbsp;now.&lt;/p&gt;
+&lt;p&gt;Unfortunately, this doesn&amp;#8217;t resolve all isolation issues because having to do a complete reset
+of in-process threaded server is a juggling whatsoever. When a tricky test fails badly, it still
+has a side-effect (see below), like&amp;nbsp;this:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+./cherrypy/process/wspbus.py:233: RuntimeWarning: The main thread is exiting, but the Bus is
+in the states.STARTING state; shutting it down automatically now. You must either call
+bus.block() after start(), or call bus.exit() before the main thread exits.
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div class="section" id="testing-progress"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id127"&gt;Testing&amp;nbsp;progress&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;What has just been said about fixed and improved stuff is happening in my fork &lt;a class="footnote-reference" href="#id71" id="id5"&gt;[5]&lt;/a&gt;, it is not yet
+pushed upstream. More detailed description and discussion about current and above sections is in
+the thread in CherryPy user group &lt;a class="footnote-reference" href="#id72" id="id6"&gt;[6]&lt;/a&gt;. Because it&amp;#8217;s there until the moment Google decides
+to shutdown Google Groups because of low traffic, abuse or any other reason they use for such
+an announcement, I will summarise the achievements in improving CherryPy testing&amp;nbsp;infrastructure.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;Migrated tests to stdlib &lt;tt class="docutils literal"&gt;unittest&lt;/tt&gt;, &lt;tt class="docutils literal"&gt;unitest2&lt;/tt&gt; as fallback for &lt;em&gt;py26&lt;/em&gt;. Nose is unfriendly
+to &lt;em&gt;py3&lt;/em&gt; and probably was related to some locking&amp;nbsp;issues.&lt;/li&gt;
+&lt;li&gt;Overall improvement in avoiding freezes in various test cases and testing environments.
+&lt;span class="caps"&gt;TTY&lt;/span&gt; in Docker, disabled interactive mode, various internals&amp;#8217; tests wait in a thread, et&amp;nbsp;cetera.&lt;/li&gt;
+&lt;li&gt;Implemented &amp;#8220;tagged&amp;#8221; Tox 1.8+ configuration for matrix of various environments (see&amp;nbsp;below).&lt;/li&gt;
+&lt;li&gt;Integrated with Drone.io &lt;a class="footnote-reference" href="#id73" id="id7"&gt;[7]&lt;/a&gt; &lt;span class="caps"&gt;CI&lt;/span&gt; service and Codecov.io &lt;a class="footnote-reference" href="#id74" id="id8"&gt;[8]&lt;/a&gt; code coverage tracking&amp;nbsp;service.&lt;/li&gt;
+&lt;li&gt;Made various changes to allow parallel environment run with Detox to fit in 15 minutes of
+Drone.io free tier. It includes running tests in install directory &lt;a class="footnote-reference" href="#id75" id="id9"&gt;[9]&lt;/a&gt;, starting server each
+time on free port provided by &lt;span class="caps"&gt;OS&lt;/span&gt;, locking Memcached cases with an atomic operation and&amp;nbsp;other.&lt;/li&gt;
+&lt;li&gt;Removed global and persistent configuration that prevented mixing &lt;span class="caps"&gt;HTTP&lt;/span&gt; and &lt;span class="caps"&gt;HTTPS&lt;/span&gt;&amp;nbsp;cases.&lt;/li&gt;
+&lt;li&gt;Made it possible to work on the test suite in PyDev. When running tests in PyDev test runner,
+it adds another non-daemonic thread that tests don&amp;#8217;t expect which leads to deadlocks or fails
+for 3 tests. They are now just skipped under PyDev&amp;nbsp;runner.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Here&amp;#8217;s Drone.io commands required to run the test suite. It uses Deadsnakes &lt;a class="footnote-reference" href="#id76" id="id10"&gt;[10]&lt;/a&gt; to install old
+or not yet stable version of Python. Development versions are needed to build pyOpenSSL. The rest
+comes with Drone.io container out of the&amp;nbsp;box.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;debconf debconf/frontend select noninteractive&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; sudo debconf-set-selections
+sudo add-apt-repository ppa:fkrull/deadsnakes &lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&amp;gt; /dev/null
+sudo apt-get update &lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&amp;gt; /dev/null
+sudo apt-get -y install python2.6 python3.4 &lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&amp;gt; /dev/null
+sudo apt-get -y install python2.6-dev python3.4-dev &lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&amp;gt; /dev/null
+
+sudo pip install --quiet detox
+detox
+tox -e post
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As you can see &lt;tt class="docutils literal"&gt;post&lt;/tt&gt; environment closes the build. Unless the build was successful it won&amp;#8217;t run
+and no coverage will be submitted or build artifacts become available. The build artifacts, what
+also needs to be listed in Drone.io, are several quality assurance reports that can be helpful for
+further improving the&amp;nbsp;codebase:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+coverage_report.txt
+coverage_report.html.tgz
+maintenance_index.txt
+code_complexity.txt
+&lt;/pre&gt;
+&lt;p&gt;For Codecov.io integration to work, environment variable &lt;tt class="docutils literal"&gt;CODECOV_TOKEN&lt;/tt&gt; should be&amp;nbsp;assigned.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="tagged-tox-configuration"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id128"&gt;Tagged Tox&amp;nbsp;configuration&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;Final Tox configuration looks like the following. It emerged through series of rewrites that were
+led by tradeoffs between test duration, combined coverage report and need to test dependencies.
+I came to the last design after I realised importance of support of pyOpenSSL and thus the need to
+test it (see about &lt;span class="caps"&gt;SSL&lt;/span&gt; issues below). Then test sampling facility was easy to integrate to&amp;nbsp;it.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;[tox]&lt;/span&gt;
+&lt;span class="na"&gt;minversion&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;1.8&lt;/span&gt;
+&lt;span class="na"&gt;envlist&lt;/span&gt;    &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;pre,docs,py{26-co,27-qa,33-nt,34-qa}{,-ssl,-ossl}&lt;/span&gt;
+
+&lt;span class="c1"&gt;# run tests from install dir, not checkout dir&lt;/span&gt;
+&lt;span class="c1"&gt;# http://tox.rtfd.org/en/latest/example/pytest.html#known-issues-and-limitations&lt;/span&gt;
+&lt;span class="k"&gt;[testenv]&lt;/span&gt;
+&lt;span class="na"&gt;changedir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;{envsitepackagesdir}/cherrypy&lt;/span&gt;
+&lt;span class="na"&gt;setenv&lt;/span&gt;    &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    qa:   COVERAGE_FILE = {toxinidir}/.coverage.{envname}&lt;/span&gt;
+&lt;span class="s"&gt;    ssl:  CHERRYPY_TEST_SSL_MODULE = builtin&lt;/span&gt;
+&lt;span class="s"&gt;    ossl: CHERRYPY_TEST_SSL_MODULE = pyopenssl&lt;/span&gt;
+&lt;span class="s"&gt;    sa:   CHERRYPY_TEST_XML_REPORT_DIR = {toxinidir}/test-xml-data&lt;/span&gt;
+&lt;span class="na"&gt;deps&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    routes&lt;/span&gt;
+&lt;span class="s"&gt;    py26:      unittest2&lt;/span&gt;
+&lt;span class="s"&gt;    py{26,27}: python-memcached&lt;/span&gt;
+&lt;span class="s"&gt;    py{33,34}: python3-memcached&lt;/span&gt;
+&lt;span class="s"&gt;    qa:        coverage&lt;/span&gt;
+&lt;span class="s"&gt;    ossl:      pyopenssl&lt;/span&gt;
+&lt;span class="s"&gt;    sa:        unittest-xml-reporting&lt;/span&gt;
+&lt;span class="na"&gt;commands&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    python --version&lt;/span&gt;
+&lt;span class="s"&gt;    nt: python -m unittest {posargs: discover -v cherrypy.test}&lt;/span&gt;
+&lt;span class="s"&gt;    co: unit2 {posargs:discover -v cherrypy.test}&lt;/span&gt;
+&lt;span class="s"&gt;    qa: coverage run --branch --source=&amp;quot;.&amp;quot; --omit=&amp;quot;t*/*&amp;quot; \&lt;/span&gt;
+&lt;span class="s"&gt;    qa: --module unittest {posargs: discover -v cherrypy.test}&lt;/span&gt;
+&lt;span class="s"&gt;    sa: python test/xmltestreport.py&lt;/span&gt;
+
+&lt;span class="k"&gt;[testenv:docs]&lt;/span&gt;
+&lt;span class="na"&gt;basepython&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;python2.7&lt;/span&gt;
+&lt;span class="na"&gt;changedir&lt;/span&gt;  &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;docs&lt;/span&gt;
+&lt;span class="na"&gt;commands&lt;/span&gt;   &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;sphinx-build -q -E -n -b html . build&lt;/span&gt;
+&lt;span class="na"&gt;deps&lt;/span&gt;       &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    sphinx &amp;lt; 1.3&lt;/span&gt;
+&lt;span class="s"&gt;    sphinx_rtd_theme&lt;/span&gt;
+
+&lt;span class="k"&gt;[testenv:pre]&lt;/span&gt;
+&lt;span class="na"&gt;changedir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;{toxinidir}&lt;/span&gt;
+&lt;span class="na"&gt;deps&lt;/span&gt;      &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;coverage&lt;/span&gt;
+&lt;span class="na"&gt;commands&lt;/span&gt;  &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;coverage erase&lt;/span&gt;
+
+&lt;span class="c1"&gt;# must be run separately after main envlist, because of detox&lt;/span&gt;
+&lt;span class="k"&gt;[testenv:post]&lt;/span&gt;
+&lt;span class="na"&gt;changedir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;{toxinidir}&lt;/span&gt;
+&lt;span class="na"&gt;deps&lt;/span&gt;      &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    coverage&lt;/span&gt;
+&lt;span class="s"&gt;    codecov&lt;/span&gt;
+&lt;span class="s"&gt;    radon&lt;/span&gt;
+&lt;span class="na"&gt;commands&lt;/span&gt;  &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    bash -c &amp;#39;echo -e &amp;quot;[paths]\nsource = \n  cherrypy&amp;quot; &amp;gt; .coveragerc&amp;#39;&lt;/span&gt;
+&lt;span class="s"&gt;    bash -c &amp;#39;echo &amp;quot;  .tox/*/lib/*/site-packages/cherrypy&amp;quot; &amp;gt;&amp;gt; .coveragerc&amp;#39;&lt;/span&gt;
+&lt;span class="s"&gt;    coverage combine&lt;/span&gt;
+&lt;span class="s"&gt;    bash -c &amp;#39;coverage report &amp;gt; coverage_report.txt&amp;#39;&lt;/span&gt;
+&lt;span class="s"&gt;    coverage html&lt;/span&gt;
+&lt;span class="s"&gt;    tar -czf coverage_report.html.tgz htmlcov&lt;/span&gt;
+&lt;span class="s"&gt;    - codecov&lt;/span&gt;
+&lt;span class="s"&gt;    bash -c &amp;#39;radon mi -s -e &amp;quot;cherrypy/t*/*&amp;quot; cherrypy &amp;gt; maintenance_index.txt&amp;#39;&lt;/span&gt;
+&lt;span class="s"&gt;    bash -c &amp;#39;radon cc -s -e &amp;quot;cherrypy/t*/*&amp;quot; cherrypy &amp;gt; code_complexity.txt&amp;#39;&lt;/span&gt;
+&lt;span class="na"&gt;whitelist_externals&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&lt;/span&gt;
+&lt;span class="s"&gt;    /bin/tar&lt;/span&gt;
+&lt;span class="s"&gt;    /bin/bash&lt;/span&gt;
+
+&lt;span class="c1"&gt;# parse and collect XML files of XML test runner&lt;/span&gt;
+&lt;span class="k"&gt;[testenv:report]&lt;/span&gt;
+&lt;span class="na"&gt;deps&lt;/span&gt;      &lt;span class="o"&gt;=&lt;/span&gt;
+&lt;span class="na"&gt;changedir&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;{toxinidir}&lt;/span&gt;
+&lt;span class="na"&gt;commands&lt;/span&gt;  &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;python -m cherrypy.test.xmltestreport --parse&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This design heavily relies on great multi-dimensional configuration that appeared in Tox 1.8 &lt;a class="footnote-reference" href="#id77" id="id11"&gt;[11]&lt;/a&gt;.
+Given an environment, say &lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;py27-nt-ossl&lt;/span&gt;&lt;/tt&gt;, Tox treats it like a set of tags,
+&lt;tt class="docutils literal"&gt;{'py27', 'nt', 'ossl'}&lt;/tt&gt;, where each entry is matched individually. This way any environment,
+that makes sense though, with desired qualities can be constructed even if it isn&amp;#8217;t listed in
+&lt;tt class="docutils literal"&gt;envlist&lt;/tt&gt;. Here&amp;#8217;s a table that explains the purpose of the&amp;nbsp;tags.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="8%" /&gt;
+&lt;col width="92%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head"&gt;tag&lt;/th&gt;
+&lt;th class="head"&gt;meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;nt&lt;/td&gt;
+&lt;td&gt;normal test run via &lt;tt class="docutils literal"&gt;unittest&lt;/tt&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;co&lt;/td&gt;
+&lt;td&gt;compatibility run via &lt;tt class="docutils literal"&gt;unittest2&lt;/tt&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;qa&lt;/td&gt;
+&lt;td&gt;quality assurance run via &lt;tt class="docutils literal"&gt;coverage&lt;/tt&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;sa&lt;/td&gt;
+&lt;td&gt;test sampling run via &lt;tt class="docutils literal"&gt;xmlrunner&lt;/tt&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ssl&lt;/td&gt;
+&lt;td&gt;run using Python bulitin &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt; module&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;ossl&lt;/td&gt;
+&lt;td&gt;run using PyOpenSSL&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Note &lt;tt class="docutils literal"&gt;{posargs: discover &lt;span class="pre"&gt;-v&lt;/span&gt; cherrypy.test}&lt;/tt&gt; part. It makes possible to run a subset of the
+test suite in desired environments,&amp;nbsp;e.g.:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;tox -e &lt;span class="s2"&gt;&amp;quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&amp;quot;&lt;/span&gt; -- -v cherrypy.test.test_http &lt;span class="se"&gt;\&lt;/span&gt;
+  cherrypy.test.test_conn.TestLimitedRequestQueue &lt;span class="se"&gt;\&lt;/span&gt;
+  cherrypy.test.test_caching.TestCache.test_antistampede
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="tackling-entropy-of-threading-and-in-process-server-juggling"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id129"&gt;Tackling entropy of threading and in-process server&amp;nbsp;juggling&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;Even though there was a progress on making test suite more predictable, and actually runnable,
+it is still far from desired, and I was scratching my head trying to figure out how to gather
+test stats from all the environments. Solution was in the lighted place, right where I was
+looking for it. There&amp;#8217;s a package &lt;em&gt;unittest-xml-reporting&lt;/em&gt;, whose name is pretty descriptive.
+It&amp;#8217;s a &lt;tt class="docutils literal"&gt;unittest&lt;/tt&gt; runner that writes &lt;span class="caps"&gt;XML&lt;/span&gt; files likes
+&lt;tt class="docutils literal"&gt;&lt;span class="pre"&gt;&lt;span class="caps"&gt;TEST&lt;/span&gt;-test.test_auth_basic.TestBasicAuth-20150410005927.xml&lt;/span&gt;&lt;/tt&gt; with easy-to-guess content.
+Then it was just a need to write some glue code for overnight runs and implement parsing and&amp;nbsp;aggregation.&lt;/p&gt;
+&lt;p&gt;I&amp;#8217;ve implemented and incorporated module named &lt;tt class="docutils literal"&gt;xmltestreport&lt;/tt&gt; &lt;a class="footnote-reference" href="#id78" id="id12"&gt;[12]&lt;/a&gt; into the &lt;tt class="docutils literal"&gt;test&lt;/tt&gt;
+package. &lt;tt class="docutils literal"&gt;sa&lt;/tt&gt; Tox tag corresponds to it. Running the following in terminal at evening,
+at morning can give you the following table (except N/A evironments, see&amp;nbsp;below).&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt; i in &lt;span class="o"&gt;{&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;..64&lt;span class="o"&gt;}&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;do&lt;/span&gt; tox -e &lt;span class="s2"&gt;&amp;quot;py{26,27,33,34}-sa{,-ssl,-ossl}&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;done&lt;/span&gt;
+tox -e report
+&lt;/pre&gt;&lt;/div&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="84%" /&gt;
+&lt;col width="5%" /&gt;
+&lt;col width="5%" /&gt;
+&lt;col width="5%" /&gt;
+&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py26-sa&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="4"&gt;&lt;span class="caps"&gt;OK&lt;/span&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py26-sa-ossl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestLimitedRequestQueue.test_queue_full&lt;/td&gt;
+&lt;td&gt;27&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_request_obj.TestRequestObject.testParamErrors&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;26&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;27&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py26-sa-ssl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_caching.TestCache.test_antistampede&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_config_server.TestServerConfig.testMaxRequestSize&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestLimitedRequestQueue.test_queue_full&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py27-sa&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="4"&gt;&lt;span class="caps"&gt;OK&lt;/span&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py27-sa-ossl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestLimitedRequestQueue.test_queue_full&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_session.TestSession.testFileConcurrency&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_states.TestWait.test_wait_for_occupied_port_INADDR_ANY&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_tools.TestTool.testCombinedTools&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;31&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py27-sa-ssl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_caching.TestCache.test_antistampede&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_config_server.TestServerConfig.testMaxRequestSize&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestLimitedRequestQueue.test_queue_full&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_tools.TestTool.testCombinedTools&lt;/td&gt;
+&lt;td&gt;2&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;31&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py33-sa&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestPipeline.test_HTTP11_pipelining&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;16&lt;/td&gt;
+&lt;td&gt;17&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py33-sa-ossl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="4"&gt;N/A&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py33-sa-ssl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_caching.TestCache.test_antistampede&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;33&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_tools.TestTool.testCombinedTools&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;30&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py34-sa&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestLimitedRequestQueue.test_queue_full&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_conn.TestPipeline.test_HTTP11_pipelining&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;14&lt;/td&gt;
+&lt;td&gt;19&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py34-sa-ossl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="4"&gt;N/A&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;strong&gt;py34-sa-ssl&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;F&lt;/td&gt;
+&lt;td&gt;E&lt;/td&gt;
+&lt;td&gt;S&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_caching.TestCache.test_antistampede&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_config_server.TestServerConfig.testMaxRequestSize&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;31&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_static.TestStatic.test_file_stream&lt;/td&gt;
+&lt;td&gt;32&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;test_tools.TestTool.testCombinedTools&lt;/td&gt;
+&lt;td&gt;3&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;29&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Actually, as you can see, it only had time for half of the iterations, and at the morning I
+interrupted it. Sylvain, you see, I mentioned those three tests in the group correctly.
+But there&amp;#8217;re other candidates and this new arisen fragility of &lt;span class="caps"&gt;SSL&lt;/span&gt; sockets, if I understand it
+correctly. I mean all the tests with one fail or error. For example,
+&lt;tt class="docutils literal"&gt;test_session.TestSession.testFileConcurrency&lt;/tt&gt; which is fine lock-wise but because it stresses
+networking layer with several dozen client threads, there&amp;#8217;re two socket&amp;nbsp;errors:&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+Exception in thread Thread-1098:
+Traceback (most recent call last):
+  File &amp;quot;/usr/lib64/python2.7/threading.py&amp;quot;, line 810, in __bootstrap_inner
+    self.run()
+  File &amp;quot;/usr/lib64/python2.7/threading.py&amp;quot;, line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File &amp;quot;py27-sa-ossl/lib/python2.7/site-packages/cherrypy/test/test_session.py&amp;quot;, line 282, in request
+    c.endheaders()
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 969, in endheaders
+    self._send_output(message_body)
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 829, in _send_output
+    self.send(msg)
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 805, in send
+    self.sock.sendall(data)
+  File &amp;quot;/usr/lib64/python2.7/ssl.py&amp;quot;, line 293, in sendall
+    v = self.send(data[count:])
+  File &amp;quot;/usr/lib64/python2.7/ssl.py&amp;quot;, line 262, in send
+    v = self._sslobj.write(data)
+error: [Errno 32] Broken pipe
+
+Exception in thread Thread-1099:
+Traceback (most recent call last):
+  File &amp;quot;/usr/lib64/python2.7/threading.py&amp;quot;, line 810, in __bootstrap_inner
+    self.run()
+  File &amp;quot;/usr/lib64/python2.7/threading.py&amp;quot;, line 763, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File &amp;quot;py27-sa-ossl/lib/python2.7/site-packages/cherrypy/test/test_session.py&amp;quot;, line 282, in request
+    c.endheaders()
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 969, in endheaders
+    self._send_output(message_body)
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 829, in _send_output
+    self.send(msg)
+  File &amp;quot;/usr/lib64/python2.7/httplib.py&amp;quot;, line 805, in send
+    self.sock.sendall(data)
+  File &amp;quot;/usr/lib64/python2.7/ssl.py&amp;quot;, line 293, in sendall
+    v = self.send(data[count:])
+  File &amp;quot;/usr/lib64/python2.7/ssl.py&amp;quot;, line 262, in send
+    v = self._sslobj.write(data)
+error: [Errno 104] Connection reset by peer
+&lt;/pre&gt;
+&lt;p&gt;Other error details are available in &lt;span class="caps"&gt;XML&lt;/span&gt; reports which retain such details. You may think that
+I have found the reason for &amp;#8220;carefulness&amp;#8221; I questioned above, but I woulnd&amp;#8217;t agree for several
+reasons. First, it looks like an &lt;span class="caps"&gt;SSL&lt;/span&gt;-only and also needs investigation &amp;#8212; someone knows practical
+reasons for the &lt;span class="caps"&gt;SSL&lt;/span&gt; server and client to be more fragile? Second, if a test stresses server with a
+few dozens of client threads, regardless of &lt;span class="caps"&gt;SSL&lt;/span&gt;, it should be written in a way that tolerates
+failures for some of them rather than relying on magic recovery behind the scenes. And after all,
+all this integration testing is quite useless if we assume we&amp;#8217;re fine having 9/10 of the client to
+fail in any&amp;nbsp;test.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="status-indication"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id130"&gt;Status&amp;nbsp;indication&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;Long story told short, I have changed my mind on status badges. After thinking a lot about
+organising project&amp;#8217;s status indication and notification, where most important is regression
+notification when we have contributors who used to commit without running tests, I came to
+conclusion that status badges can do the&amp;nbsp;job.&lt;/p&gt;
+&lt;p&gt;This way every contributor will know that an introduced regression will become a public knowledge
+in a matter of minutes. And that it won&amp;#8217;t make other members of the community happy about it.
+Hopefully, this as a form of enforcement of standards and new testing tools will help us go&amp;nbsp;smoother.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Another thing that made me thinking about status indication was March Google Code shutdown
+announcement &lt;a class="footnote-reference" href="#id79" id="id13"&gt;[13]&lt;/a&gt;. For my Open Source code I was mostly using Google Code&amp;#8217;s Mercurial.
+It was stable and minimal environment without distraction. Although it wasn&amp;#8217;t a substantially
+maintained and over time it had become lacking several features, however it still has several
+exclusive ones. Essentially it was a project hosting in contrast to Bitbucket and Github
+which are a repository hosting. One could have as many repositories inside a project as needed.
+I know it is also feasible with Mercurial named branches, but it still feels a little denser
+than it should be. Another handy thing was that Google served raw content with appropriate &lt;span class="caps"&gt;MIME&lt;/span&gt;,
+e.g. JavaScript with &lt;tt class="docutils literal"&gt;text/javascript&lt;/tt&gt;, thus allowed right-off-the-repo deployment for various
+testing&amp;nbsp;purposes.&lt;/p&gt;
+&lt;p&gt;For status indication I used &lt;em&gt;external links&lt;/em&gt;, the block in left side bar on main project page.
+You could say here is PyPi page, here&amp;#8217;s &lt;span class="caps"&gt;CI&lt;/span&gt;, and here&amp;#8217;s test coverage tracking. Because it was
+visible, in 1-click distance and parallel to project description it was&amp;nbsp;sufficient.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/div&gt;
+&lt;div class="section" id="drawing-the-line"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id131"&gt;Drawing the&amp;nbsp;line&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;As far as I see, testing infrastructure is ready. I also made several related changes here and
+there. Now I think it is a good time to put it into upstream. First, of course for other
+contributors to make use of the new tools. Second, for the sake of granularity because there&amp;#8217;s
+already a bunch of changes since January in my fork. And third, in coming months it is likely that
+I won&amp;#8217;t have much time for contribution, thus it&amp;#8217;s good time to discuss the changes if we need&amp;nbsp;to.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="ssl"&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id132"&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt;&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;As a part of discussion of design decisions made in the test suite &lt;a class="footnote-reference" href="#id72" id="id14"&gt;[6]&lt;/a&gt;, Joseph Tate, another
+CherryPy contributor expressed opinion that &lt;span class="caps"&gt;SSL&lt;/span&gt; support in CherryPy should be deprecated.
+Basically the message is about how can we guarantee security of the implementation if we can&amp;#8217;t
+even guarantee its&amp;nbsp;functionality.&lt;/p&gt;
+&lt;p&gt;Later in discussion with Joseph when I stood on fact that CherryPy&amp;#8217;s &lt;span class="caps"&gt;SSL&lt;/span&gt; adapters are a wrapper on
+wrapper, Python &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt; or pyOpenSSL on OpenSSL, and we don&amp;#8217;t need a professional security expert
+in the community or special maintenance, he relaxed his&amp;nbsp;opinion.&lt;/p&gt;
+&lt;blockquote&gt;
+Distros have patched OpenSSL to remove insecure stuff, so maybe this is not as big a concern
+as I&amp;#8217;m making it out to be, but the lack of an expert on this code is hindering its viability.&lt;/blockquote&gt;
+&lt;p&gt;Also I want to inform Joseph, that his knowledge of CherryPy support for intermediate certificates
+isn&amp;#8217;t up to date. &lt;tt class="docutils literal"&gt;cherrypy.server.ssl_certificate_chain&lt;/tt&gt; is documented &lt;a class="footnote-reference" href="#id80" id="id15"&gt;[14]&lt;/a&gt; and was there at
+least since 2011. I&amp;#8217;ve verified it works in default&amp;nbsp;branch.&lt;/p&gt;
+&lt;p&gt;Anyway, I took Joseph&amp;#8217;s questions seriously and I&amp;#8217;m sure &lt;strong&gt;we should not in any way give our users
+false sense of security&lt;/strong&gt;. Security here is in theoretical sense as the state of art. I&amp;#8217;m neither
+about zero-day breaches in algorithms and implementations, nor about fundamental problem of &lt;span class="caps"&gt;CA&lt;/span&gt;
+trust, no-such-agencies and generally post-Snowden world we live&amp;nbsp;in.&lt;/p&gt;
+&lt;p&gt;On the other hand I believe that having pure Python functional (possibly insecure in theoretical
+sense) &lt;span class="caps"&gt;HTTPS&lt;/span&gt; server is beneficial for many practical use cases. There&amp;#8217;re various development tools
+that are &lt;span class="caps"&gt;HTTPS&lt;/span&gt;-only unless you fight them. There&amp;#8217;re environments where you have Python but can&amp;#8217;t
+install other software. There&amp;#8217;re use cases then any &lt;span class="caps"&gt;SSL&lt;/span&gt;, as an obfuscation, is fairly enough&amp;nbsp;secure.&lt;/p&gt;
+&lt;p&gt;CherryPy is described and known as a complete web server and such reduction would be a big
+loss. And as I will show you below, although there&amp;#8217;re several issues it is possible to
+workaround them and configure CherryPy to serve an application over &lt;span class="caps"&gt;HTTPS&lt;/span&gt; securely even&amp;nbsp;today.&lt;/p&gt;
+&lt;div class="section" id="experiment"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id133"&gt;Experiment&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;Recently there was a CherryPy StackOverflow question right about the topic &lt;a class="footnote-reference" href="#id81" id="id16"&gt;[15]&lt;/a&gt;. The guy asked
+&lt;em&gt;how to block &lt;span class="caps"&gt;SSL&lt;/span&gt; protocols in favour of &lt;span class="caps"&gt;TLS&lt;/span&gt;&lt;/em&gt;. It led me to coming to the following
+quick-and-dirty&amp;nbsp;solution.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="ch"&gt;#!/usr/bin/env python&lt;/span&gt;
+&lt;span class="c1"&gt;# -*- coding: utf-8 -*-&lt;/span&gt;
+
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;os&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sys&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ssl&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;cherrypy&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;cherrypy.wsgiserver.ssl_builtin&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;BuiltinSSLAdapter&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;cherrypy.wsgiserver.ssl_pyopenssl&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;pyOpenSSLAdapter&lt;/span&gt;
+
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;cherrypy&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;wsgiserver&lt;/span&gt;
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;version_info&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+  &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;cherrypy.wsgiserver.wsgiserver2&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;ssl_adapters&lt;/span&gt;
+&lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+  &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;cherrypy.wsgiserver.wsgiserver3&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;ssl_adapters&lt;/span&gt;
+
+&lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+  &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;OpenSSL&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;SSL&lt;/span&gt;
+&lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="ne"&gt;ImportError&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+  &lt;span class="k"&gt;pass&lt;/span&gt;
+
+
+&lt;span class="n"&gt;ciphers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+  &lt;span class="s1"&gt;&amp;#39;ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:&amp;#39;&lt;/span&gt;
+  &lt;span class="s1"&gt;&amp;#39;DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:&amp;#39;&lt;/span&gt;
+  &lt;span class="s1"&gt;&amp;#39;!eNULL:!MD5:!DSS:!RC4:!SSLv2&amp;#39;&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;bundle&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dirname&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;cherrypy&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="vm"&gt;__file__&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;test&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;test.pem&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;config&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+  &lt;span class="s1"&gt;&amp;#39;global&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;server.socket_host&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;127.0.0.1&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;server.socket_port&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;8443&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;server.thread_pool&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;8&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+
+    &lt;span class="s1"&gt;&amp;#39;server.ssl_module&amp;#39;&lt;/span&gt;      &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;custom-pyopenssl&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;server.ssl_certificate&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;bundle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;server.ssl_private_key&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;bundle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;BuiltinSsl&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;BuiltinSSLAdapter&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+  &lt;span class="sd"&gt;&amp;#39;&amp;#39;&amp;#39;Vulnerable, on py2 &amp;lt; 2.7.9, py3 &amp;lt; 3.3:&lt;/span&gt;
+&lt;span class="sd"&gt;    * POODLE (SSLv3), adding ``!SSLv3`` to cipher list makes it very incompatible&lt;/span&gt;
+&lt;span class="sd"&gt;    * can&amp;#39;t disable TLS compression (CRIME)&lt;/span&gt;
+&lt;span class="sd"&gt;    * supports Secure Client-Initiated Renegotiation (DOS)&lt;/span&gt;
+&lt;span class="sd"&gt;    * no Forward Secrecy&lt;/span&gt;
+&lt;span class="sd"&gt;  Also session caching doesn&amp;#39;t work. Some tweaks are posslbe, but don&amp;#39;t really&lt;/span&gt;
+&lt;span class="sd"&gt;  change much. For example, it&amp;#39;s possible to use ssl.PROTOCOL_TLSv1 instead of&lt;/span&gt;
+&lt;span class="sd"&gt;  ssl.PROTOCOL_SSLv23 with little worse compatiblity.&lt;/span&gt;
+&lt;span class="sd"&gt;  &amp;#39;&amp;#39;&amp;#39;&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;Wrap and return the given socket, plus WSGI environ entries.&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+      &lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ssl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;wrap_socket&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+        &lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="n"&gt;ciphers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ciphers&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="c1"&gt;# the override is for this line&lt;/span&gt;
+        &lt;span class="n"&gt;do_handshake_on_connect&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;True&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="n"&gt;server_side&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;True&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="n"&gt;certfile&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;certificate&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="n"&gt;keyfile&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;private_key&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="n"&gt;ssl_version&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ssl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;PROTOCOL_SSLv23&lt;/span&gt;
+      &lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="n"&gt;ssl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SSLError&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+      &lt;span class="n"&gt;e&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;exc_info&lt;/span&gt;&lt;span class="p"&gt;()[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+      &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;errno&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;ssl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SSL_ERROR_EOF&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="c1"&gt;# This is almost certainly due to the cherrypy engine&lt;/span&gt;
+        &lt;span class="c1"&gt;# &amp;#39;pinging&amp;#39; the socket to assert it&amp;#39;s connectable;&lt;/span&gt;
+        &lt;span class="c1"&gt;# the &amp;#39;ping&amp;#39; isn&amp;#39;t SSL.&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+      &lt;span class="k"&gt;elif&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;errno&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;ssl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SSL_ERROR_SSL&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;endswith&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;http request&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+          &lt;span class="c1"&gt;# The client is speaking HTTP to an HTTPS server.&lt;/span&gt;
+          &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="n"&gt;wsgiserver&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NoSSLError&lt;/span&gt;
+        &lt;span class="k"&gt;elif&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;endswith&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;unknown protocol&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+          &lt;span class="c1"&gt;# The client is speaking some non-HTTP protocol.&lt;/span&gt;
+          &lt;span class="c1"&gt;# Drop the conn.&lt;/span&gt;
+          &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+      &lt;span class="k"&gt;raise&lt;/span&gt;
+
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_environ&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;ssl_adapters&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;custom-ssl&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;BuiltinSsl&lt;/span&gt;
+
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Pyopenssl&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;pyOpenSSLAdapter&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+  &lt;span class="sd"&gt;&amp;#39;&amp;#39;&amp;#39;Mostly fine, except:&lt;/span&gt;
+&lt;span class="sd"&gt;    * Secure Client-Initiated Renegotiation&lt;/span&gt;
+&lt;span class="sd"&gt;    * no Forward Secrecy, SSL.OP_SINGLE_DH_USE could have helped but it didn&amp;#39;t&lt;/span&gt;
+&lt;span class="sd"&gt;  &amp;#39;&amp;#39;&amp;#39;&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;get_context&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;Return an SSL.Context from self attributes.&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Context&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SSLv23_METHOD&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="c1"&gt;# override:&lt;/span&gt;
+    &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;set_options&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;OP_NO_COMPRESSION&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;OP_SINGLE_DH_USE&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;OP_NO_SSLv2&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;SSL&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;OP_NO_SSLv3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;set_cipher_list&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ciphers&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;use_privatekey_file&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;private_key&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;certificate_chain&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;load_verify_locations&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;certificate_chain&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;use_certificate_file&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;certificate&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;
+
+&lt;span class="n"&gt;ssl_adapters&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;custom-pyopenssl&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Pyopenssl&lt;/span&gt;
+
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;App&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+
+  &lt;span class="nd"&gt;@cherrypy.expose&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;index&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;&amp;lt;em&amp;gt;Is this secure?&amp;lt;/em&amp;gt;&amp;#39;&lt;/span&gt;
+
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;__main__&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;cherrypy&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;quickstart&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;App&lt;/span&gt;&lt;span class="p"&gt;(),&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After I regenerated our test certificate&amp;nbsp;to:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;use longer than 1024-bit&amp;nbsp;key&lt;/li&gt;
+&lt;li&gt;not use &lt;span class="caps"&gt;MD5&lt;/span&gt; and &lt;span class="caps"&gt;SHA1&lt;/span&gt; (also deprecated &lt;a class="footnote-reference" href="#id92" id="id17"&gt;[26]&lt;/a&gt;) for&amp;nbsp;signature&lt;/li&gt;
+&lt;li&gt;use valid domain name for &lt;em&gt;common&amp;nbsp;name&lt;/em&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Using the following versions, we have &lt;strong&gt;A-&lt;/strong&gt; for the customised pyOpenSSL adapter
+on Qualys &lt;span class="caps"&gt;SSL&lt;/span&gt; Server Test &lt;a class="footnote-reference" href="#id100" id="id18"&gt;[34]&lt;/a&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Debian Wheezy&amp;nbsp;(stable)&lt;/li&gt;
+&lt;li&gt;Python 2.7.3-4+deb7u1, &lt;tt class="docutils literal"&gt;ssl.OPENSSL_VERSION == 'OpenSSL 1.0.1e 11 Feb 2013'&lt;/tt&gt;&lt;/li&gt;
+&lt;li&gt;OpenSSL&amp;nbsp;1.0.1e-2+deb7u16&lt;/li&gt;
+&lt;li&gt;pyOpenSSL&amp;nbsp;0.14&lt;/li&gt;
+&lt;li&gt;CherryPy from default branch (pre&amp;nbsp;3.7)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;img alt="Qualys gives CherryPy on pyOpenSSL 0.14 A-" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py273-pyopenssl014-qualys.png" /&gt;
+&lt;p&gt;There&amp;#8217;s no error, but the&amp;nbsp;warnings:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Secure Client-Initiated Renegotiation &amp;#8212; Supported, DoS &lt;span class="caps"&gt;DANGER&lt;/span&gt; &lt;a class="footnote-reference" href="#id82" id="id19"&gt;[16]&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Downgrade attack prevention &amp;#8212; No, TLS_FALLBACK_SCSV not supported &lt;a class="footnote-reference" href="#id83" id="id20"&gt;[17]&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Forward Secrecy &amp;#8212; No, &lt;span class="caps"&gt;WEAK&lt;/span&gt; &lt;a class="footnote-reference" href="#id84" id="id21"&gt;[18]&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Here&amp;#8217;s what Wikipedia says &lt;a class="footnote-reference" href="#id91" id="id22"&gt;[25]&lt;/a&gt; about &lt;em&gt;forward secrecy&lt;/em&gt;, to inform you that it is not
+something critical or required for immediate&amp;nbsp;operation.&lt;/p&gt;
+&lt;blockquote&gt;
+In cryptography, forward secrecy is a property of key-agreement protocols ensuring that a
+session key derived from a set of long-term keys cannot be compromised if one of the
+long-term keys is compromised in the future.&lt;/blockquote&gt;
+&lt;p&gt;And here&amp;#8217;s what can be squeezed out of built-in &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt;, which is&amp;nbsp;grievous.&lt;/p&gt;
+&lt;img alt="Qualys gives CherryPy on Python 2.7.3's built-in SSL C" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py273-ssl-qualys.png" /&gt;
+&lt;p&gt;Here goes the what-is-wrong&amp;nbsp;list:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;span class="caps"&gt;POODLE&lt;/span&gt; (SSLv3) &amp;#8212; Vulnerable, &lt;span class="caps"&gt;INSECURE&lt;/span&gt; &lt;a class="footnote-reference" href="#id85" id="id23"&gt;[19]&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span class="caps"&gt;TLS&lt;/span&gt; compression &amp;#8212; Yes, &lt;span class="caps"&gt;INSECURE&lt;/span&gt; &lt;a class="footnote-reference" href="#id86" id="id24"&gt;[20]&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;There&amp;#8217;s also half-implemented &lt;em&gt;session resumption&lt;/em&gt; &amp;#8212; &lt;em&gt;No (IDs assigned but not accepted)&lt;/em&gt;. And
+the same three warnings as for PyOpenSSL apply. &lt;tt class="docutils literal"&gt;ssl_builtin&lt;/tt&gt; doesn&amp;#8217;t handle underlying &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt;
+module exceptions correctly, as the log was flooded by exceptions originating mostly from
+&lt;tt class="docutils literal"&gt;do_handshake()&lt;/tt&gt;. PyOpenSSL&amp;#8217;s log was the way more quiet with just a couple of page&amp;nbsp;accesses.&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+[27/Mar/2015:14:07:49] ENGINE Error in HTTPServer.tick
+Traceback (most recent call last):
+  File &amp;quot;venv/local/lib/python2.7/site-packages/cherrypy/wsgiserver/wsgiserver2.py&amp;quot;, line 1968, in start
+    self.tick()
+  File &amp;quot;venv/local/lib/python2.7/site-packages/cherrypy/wsgiserver/wsgiserver2.py&amp;quot;, line 2035, in tick
+    s, ssl_env = self.ssl_adapter.wrap(s)
+  File &amp;quot;./test.py&amp;quot;, line 53, in wrap
+    ssl_version = ssl.PROTOCOL_SSLv23
+  File &amp;quot;/usr/lib/python2.7/ssl.py&amp;quot;, line 381, in wrap_socket
+    ciphers=ciphers)
+  File &amp;quot;/usr/lib/python2.7/ssl.py&amp;quot;, line 143, in __init__
+    self.do_handshake()
+  File &amp;quot;/usr/lib/python2.7/ssl.py&amp;quot;, line 305, in do_handshake
+    self._sslobj.do_handshake()
+
+SSLError: [Errno 1] _ssl.c:504: error:1408A0C1:SSL routines:SSL3_GET_CLIENT_HELLO:no shared cipher
+SSLError: [Errno 1] _ssl.c:504: error:14076102:SSL routines:SSL23_GET_CLIENT_HELLO:unsupported protocol
+SSLError: [Errno 1] _ssl.c:504: error:1408F119:SSL routines:SSL3_GET_RECORD:decryption failed or bad record mac
+SSLError: [Errno 1] _ssl.c:504: error:14094085:SSL routines:SSL3_READ_BYTES:ccs received early
+&lt;/pre&gt;
+&lt;p&gt;But nothing is really that bad even with &lt;tt class="docutils literal"&gt;ssl_builtin&lt;/tt&gt;. Let&amp;#8217;s relax stability policy, make sure
+you understand the consequences if you&amp;#8217;re going to do it on a production server, and add
+Debain Jessie&amp;#8217;s (testing) source to &lt;tt class="docutils literal"&gt;/etc/apt/sources.list&lt;/tt&gt; of the server (Debian Wheezy) and
+see what next Debain has in its&amp;nbsp;briefcase:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Python 2.7.9-1, &lt;tt class="docutils literal"&gt;ssl.OPENSSL_VERSION == 'OpenSSL 1.0.1k 8 Jan 2015'&lt;/tt&gt;&lt;/li&gt;
+&lt;li&gt;Python 3.4.2-2, &lt;tt class="docutils literal"&gt;ssl.OPENSSL_VERSION == 'OpenSSL 1.0.1k 8 Jan 2015'&lt;/tt&gt;&lt;/li&gt;
+&lt;li&gt;OpenSSL&amp;nbsp;1.0.1k-3&lt;/li&gt;
+&lt;li&gt;pyOpenSSL 0.15.1 (installed via &lt;tt class="docutils literal"&gt;pip&lt;/tt&gt;, probably has been updated&amp;nbsp;since)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For you information, related excerpt from Python 2.7.9 release change log &lt;a class="footnote-reference" href="#id87" id="id25"&gt;[21]&lt;/a&gt;. It was in fact
+a huge security update, not very well represented by the change of a patch&amp;nbsp;version.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;The entirety of Python 3.4&amp;#8217;s ssl module has been backported for Python 2.7.9. See
+&lt;span class="caps"&gt;PEP&lt;/span&gt; 466 &lt;a class="footnote-reference" href="#id88" id="id26"&gt;[22]&lt;/a&gt; for&amp;nbsp;justification.&lt;/li&gt;
+&lt;li&gt;&lt;span class="caps"&gt;HTTPS&lt;/span&gt; certificate validation using the system&amp;#8217;s certificate store is now enabled by
+default. See &lt;span class="caps"&gt;PEP&lt;/span&gt; 476 &lt;a class="footnote-reference" href="#id89" id="id27"&gt;[23]&lt;/a&gt; for&amp;nbsp;details.&lt;/li&gt;
+&lt;li&gt;SSLv3 has been disabled by default in httplib and its reverse dependencies due to the
+&lt;span class="caps"&gt;POODLE&lt;/span&gt;&amp;nbsp;attack.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;img alt="Qualys gives CherryPy on Python 2.7.9's built-in SSL A-" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py279-ssl-qualys.png" /&gt;
+&lt;p&gt;All errors have gone, and in spite of the warning it supports &lt;em&gt;forward secrecy&lt;/em&gt; for most
+clients. Here are just couple of warnings&amp;nbsp;left:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Secure Client-Initiated Renegotiation &amp;#8212; Supported, DoS &lt;span class="caps"&gt;DANGER&lt;/span&gt; &lt;a class="footnote-reference" href="#id82" id="id28"&gt;[16]&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Session resumption (caching) &amp;#8212; No (IDs assigned but not&amp;nbsp;accepted)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The result is pretty good. If you run it on plain &lt;tt class="docutils literal"&gt;ssl_builtin&lt;/tt&gt;, is has &lt;strong&gt;B&lt;/strong&gt;, because &lt;span class="caps"&gt;RC4&lt;/span&gt;
+ciphers &lt;a class="footnote-reference" href="#id90" id="id29"&gt;[24]&lt;/a&gt; aren&amp;#8217;t excluded by default. Python 3.4.2 test on the customised &lt;tt class="docutils literal"&gt;ssl_builtin&lt;/tt&gt;
+is obviously the same &lt;strong&gt;A-&lt;/strong&gt; because both underlying libraries are the same. Customised
+&lt;tt class="docutils literal"&gt;ssl_pyopenssl&lt;/tt&gt; on Python 2.7.9 gives same &lt;strong&gt;A-&lt;/strong&gt; &amp;#8212; again it has functional &lt;em&gt;session
+resumption&lt;/em&gt; but doesn&amp;#8217;t have &lt;em&gt;forward secrecy&lt;/em&gt; for any&amp;nbsp;client.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="problem"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id134"&gt;Problem&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;After the experiment has taken place, it is time to generalise the results. Here&amp;#8217;s what is
+wrong with CherryPy&amp;#8217;s &lt;span class="caps"&gt;SSL&lt;/span&gt; support&amp;nbsp;now:&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;giving false sense of&amp;nbsp;security&lt;/li&gt;
+&lt;li&gt;not flexible configuration: protocol, ciphers,&amp;nbsp;options&lt;/li&gt;
+&lt;li&gt;not up to date with builit-in &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt; (no &lt;span class="caps"&gt;SSL&lt;/span&gt; Context &lt;a class="footnote-reference" href="#id93" id="id30"&gt;[27]&lt;/a&gt;&amp;nbsp;support)&lt;/li&gt;
+&lt;li&gt;no support for pyOpenSSL for &lt;em&gt;py3&lt;/em&gt;&lt;/li&gt;
+&lt;li&gt;no security&amp;nbsp;assessment&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class="section" id="plan"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id135"&gt;Plan&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;I think that the problem is solvable with a reasonable effort. What has been said above may
+already have convinced you that no special cryptography knowledge is required. There&amp;#8217;s a scalar
+letter grade for A to F and several design decisions aimed at flexibility and&amp;nbsp;compatibility.&lt;/p&gt;
+&lt;div class="section" id="outright-state-of-affairs"&gt;
+&lt;h4&gt;Outright state of&amp;nbsp;affairs&lt;/h4&gt;
+&lt;p&gt;Now we have the following note in &lt;em&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt; support&lt;/em&gt; section &lt;a class="footnote-reference" href="#id80" id="id31"&gt;[14]&lt;/a&gt; in &lt;em&gt;Deploy&lt;/em&gt; documentation&amp;nbsp;page.&lt;/p&gt;
+&lt;blockquote&gt;
+You may want to test your server for &lt;span class="caps"&gt;SSL&lt;/span&gt; using the services from Qualys, Inc.&lt;/blockquote&gt;
+&lt;p&gt;To me after doing this research it doesn&amp;#8217;t even look like a half-true thing expressed modestly.
+It looks we lie to users, giving them false sense of security. It may look like we&amp;#8217;re so sure
+that it&amp;#8217;s okay that we let them do a voluntary task of checking it once again, just in case.
+But in fact it is to deploy their &lt;em&gt;py2&lt;/em&gt; application and see it&amp;#8217;s vulnerable (I assume
+Python 2.7.9 isn&amp;#8217;t going to updated to soon for various reasons). This is absolutely
+redundant and we can tell that Python &amp;lt; 2.7.9 is a insecure platform right away. There should be
+a warning in documentation, like &amp;#8220;Please update to Python 2.7.9, install pyOpenSSL or start off
+with Python 3.4+. Otherwise it will only obfuscate your&amp;nbsp;channel&amp;#8221;.&lt;/p&gt;
+&lt;p&gt;Python &amp;lt; 2.7.9 should be considered an insecure platform with appropriate Python warning, see&amp;nbsp;below.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="configuration"&gt;
+&lt;h4&gt;Configuration&lt;/h4&gt;
+&lt;p&gt;&lt;tt class="docutils literal"&gt;cherrypy.server&lt;/tt&gt; in addition to &lt;tt class="docutils literal"&gt;ssl_certificate&lt;/tt&gt;, &lt;tt class="docutils literal"&gt;ssl_certificate_chain&lt;/tt&gt;,
+&lt;tt class="docutils literal"&gt;ssl_private_key&lt;/tt&gt; should&amp;nbsp;support:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;tt class="docutils literal"&gt;ssl_cipher_list&lt;/tt&gt; available for all Python versions and both adapters. Mostly needed for
+Python &amp;lt;&amp;nbsp;2.7.9.&lt;/li&gt;
+&lt;li&gt;&lt;tt class="docutils literal"&gt;ssl_context&lt;/tt&gt; available for Python 2.7.9+ and 3.3+. pyOpenSSL is almost there. &lt;span class="caps"&gt;SSL&lt;/span&gt;
+Context &lt;a class="footnote-reference" href="#id93" id="id32"&gt;[27]&lt;/a&gt; allows user to set: protocol, ciphers,&amp;nbsp;options.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span class="caps"&gt;SSL&lt;/span&gt; Context &lt;a class="footnote-reference" href="#id93" id="id33"&gt;[27]&lt;/a&gt; when not provided from user should be created with
+&lt;tt class="docutils literal"&gt;ssl.create_default_context&lt;/tt&gt; which takes care of security defaults. It is available for
+Python 2.7.9+ and 3.4+. For Python 3.3 context should be configured at CherryPy side
+(the function is two dozen of lines &lt;a class="footnote-reference" href="#id95" id="id34"&gt;[29]&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;&lt;tt class="docutils literal"&gt;ssl_adapters&lt;/tt&gt; should be available at &lt;tt class="docutils literal"&gt;cherrypy.wsgiserver&lt;/tt&gt; for user be able to set
+custom adapter (see the code above). Already implemented in my&amp;nbsp;fork.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="built-in-ssl-adapter-update"&gt;
+&lt;h4&gt;Built-in &lt;span class="caps"&gt;SSL&lt;/span&gt; adapter&amp;nbsp;update&lt;/h4&gt;
+&lt;p&gt;The adapter should make use of &lt;span class="caps"&gt;PEP&lt;/span&gt; 466 &lt;a class="footnote-reference" href="#id88" id="id35"&gt;[22]&lt;/a&gt;. This way, inside it may be two adapters. One for
+Python 2.7.9+ with &lt;span class="caps"&gt;SSL&lt;/span&gt; Context &lt;a class="footnote-reference" href="#id93" id="id36"&gt;[27]&lt;/a&gt; support and one for Python &amp;lt; 2.7.9. The latter should be
+explicitly documented as vulnerable and emit warning when used. Documentation and warning text
+can be taken from &lt;tt class="docutils literal"&gt;urllib3&lt;/tt&gt;&amp;#8216;s &lt;tt class="docutils literal"&gt;InsecurePlatformWarning&lt;/tt&gt; &lt;a class="footnote-reference" href="#id96" id="id37"&gt;[30]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The adapter should handle &lt;span class="caps"&gt;SSL&lt;/span&gt; exceptions according to the protocol, not flooding the log with&amp;nbsp;them.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="python-3-support-for-pyopenssl-adapter"&gt;
+&lt;h4&gt;Python 3 support for pyOpenSSL&amp;nbsp;adapter&lt;/h4&gt;
+&lt;p&gt;Purpose of pyOpenSSL adapter should be rethought as Python &amp;lt; 2.6 is no longer supported
+and Python 2.6+ has &lt;tt class="docutils literal"&gt;ssl&lt;/tt&gt; module built in. Thus the purpose is not to provide a fallback.
+The purpose is to provide more flexibility for users to manage their own security. Python
+binary that comes from a disto&amp;#8217;s repository have their own version of OpenSSL. When an OpenSSL
+breach is discovered it is reasonable to expect patched OpenSSL package to be shipped first.
+This gives an user ability to rebuild pyOpenSSL with latest OpenSSL as soon as possible in matter
+of&amp;nbsp;doing:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip install -I pyOpenSSL
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Embracing this purpose Python 3 support should be provided. Currently
+&lt;tt class="docutils literal"&gt;pyOpenSSLAdapter.makefile&lt;/tt&gt; uses &lt;tt class="docutils literal"&gt;wsgiserver.CP_fileobject&lt;/tt&gt; directly and uses
+&lt;tt class="docutils literal"&gt;wsgiserver.ssl_pyopenssl.SSL_fileobject&lt;/tt&gt; which inherits from &lt;tt class="docutils literal"&gt;wsgiserver.CP_fileobject&lt;/tt&gt;.
+&lt;tt class="docutils literal"&gt;wsgiserver.CP_fileobject&lt;/tt&gt; is available only in &lt;tt class="docutils literal"&gt;wsgiserver.wsgiserver2&lt;/tt&gt;. Therefore
+&lt;tt class="docutils literal"&gt;pyOpenSSLAdapter.makefile&lt;/tt&gt; should use &lt;tt class="docutils literal"&gt;wsgiserver.CP_makefile&lt;/tt&gt; in &lt;em&gt;py3&lt;/em&gt; just like
+&lt;tt class="docutils literal"&gt;BuiltinSSLAdapter&lt;/tt&gt; does. Here an advice or involvement of original authors is likely to
+be needed because it&amp;#8217;s unclear in what circumstances &lt;tt class="docutils literal"&gt;pyOpenSSLAdapter.makefile&lt;/tt&gt; should return
+non-&lt;span class="caps"&gt;SSL&lt;/span&gt;&amp;nbsp;socket.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="automated-security-assessment"&gt;
+&lt;h4&gt;Automated security&amp;nbsp;assessment&lt;/h4&gt;
+&lt;p&gt;Debian package of OpenSSL is described&amp;nbsp;as:&lt;/p&gt;
+&lt;blockquote&gt;
+[When] you need it to perform certain cryptographic actions like&amp;#8230;
+&lt;span class="caps"&gt;SSL&lt;/span&gt;/&lt;span class="caps"&gt;TLS&lt;/span&gt; client and server tests.&lt;/blockquote&gt;
+&lt;p&gt;There are also things like sslyze &lt;a class="footnote-reference" href="#id97" id="id38"&gt;[31]&lt;/a&gt;, which is described as &lt;em&gt;fast and full-featured &lt;span class="caps"&gt;SSL&lt;/span&gt;
+scanner&lt;/em&gt;. I think at some extent this approach will give automated security test, but it&amp;#8217;s an
+rough road. Basically, the quality of results will depend on our proficiency and maintenance of
+the chosen tool. Much easier way is to you a&amp;nbsp;service.&lt;/p&gt;
+&lt;p&gt;Luckily, in January Qualys announced &lt;span class="caps"&gt;SSL&lt;/span&gt; Labs &lt;span class="caps"&gt;API&lt;/span&gt; beta &lt;a class="footnote-reference" href="#id98" id="id39"&gt;[32]&lt;/a&gt;. At the dedicated page &lt;a class="footnote-reference" href="#id99" id="id40"&gt;[33]&lt;/a&gt;
+there&amp;#8217;re links to official command like client and protocol manual. It makes sense to expect
+the same behaviour from the &lt;span class="caps"&gt;API&lt;/span&gt; as the normal tester &lt;a class="footnote-reference" href="#id100" id="id41"&gt;[34]&lt;/a&gt; has. If so it won&amp;#8217;t work on bare &lt;span class="caps"&gt;IP&lt;/span&gt;
+address and on non 443&amp;nbsp;port.&lt;/p&gt;
+&lt;p&gt;To externalise this idea we have some prerequisite. If there&amp;#8217;s real CherryPy instance running
+behind Nginx on cherrypy.org at WebFaction, then do we have access to it? Can we run several
+additional instances there? If not, can we run them somewhere&amp;nbsp;else?&lt;/p&gt;
+&lt;p&gt;If think of instances for the following&amp;nbsp;environments:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;em&gt;py2-ssl-insecure.ssl.cherrypy.org&lt;/em&gt; with Python &amp;lt; 2.7.9 that will probably be stable version
+in distos&amp;#8217; repositories for quite some&amp;nbsp;time&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;py2-ssl-secure.ssl.cherrypy.org&lt;/em&gt; with Python&amp;nbsp;2.7.9+&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;py2-pyopenssl-secure.ssl.cherrypy.org&lt;/em&gt; with any &lt;em&gt;py2&lt;/em&gt; with&amp;nbsp;pyOpenSSL&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;py3-ssl-secure.ssl.cherrypy.org&lt;/em&gt; with Python&amp;nbsp;3.4+&lt;/li&gt;
+&lt;li&gt;&lt;em&gt;py3-pyopenssl-secure.ssl.cherrypy.org&lt;/em&gt; with any &lt;em&gt;py3&lt;/em&gt; with pyOpenSSL once it&amp;#8217;s&amp;nbsp;available&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Then we need to multiplex them to outer port 443 because likely it&amp;#8217;ll be running on single
+server. Because Nginx doesn&amp;#8217;t seem to be able passthrough upstream &lt;span class="caps"&gt;SSL&lt;/span&gt; connections &lt;a class="footnote-reference" href="#id101" id="id42"&gt;[35]&lt;/a&gt;
+we need to employ something else, maybe HAProxy &lt;a class="footnote-reference" href="#id102" id="id43"&gt;[36]&lt;/a&gt; &lt;a class="footnote-reference" href="#id103" id="id44"&gt;[37]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;What&amp;#8217;s left to do thereafter is to implement &lt;span class="caps"&gt;SSL&lt;/span&gt; Labs &lt;span class="caps"&gt;API&lt;/span&gt;, run in some schedule and we&amp;#8217;re done.
+It is able to give us detailed and actual reports on every environment that can be exposed to
+users to make their&amp;nbsp;decisions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="docker"&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id136"&gt;Docker&lt;/a&gt;&lt;/h2&gt;
+&lt;blockquote&gt;
+People are running in circles, screaming &amp;#8220;DevOps&amp;#8221;. Besides over half of them also
+yell &amp;#8220;Docker&amp;#8221; at odd turns.&lt;/blockquote&gt;
+&lt;p&gt;Scene of the day; Baron &amp;#8220;Xaprb&amp;#8221; Schwartz authored an article about DevOps identity crisis &lt;a class="footnote-reference" href="#id104" id="id45"&gt;[38]&lt;/a&gt;
+which makes it all feel this disordered. Or from the other end, at LinuxCon 2014 talk founder
+and now &lt;span class="caps"&gt;CTO&lt;/span&gt; of Docker, Inc. Solomon Hykes presented &lt;a class="footnote-reference" href="#id105" id="id46"&gt;[39]&lt;/a&gt;:&lt;/p&gt;
+&lt;blockquote&gt;
+I know 2 things about Docker: it uses Linux containers, and the Internet won&amp;#8217;t
+shut up about it.&lt;/blockquote&gt;
+&lt;p&gt;And all you want in the end of the day to all the these people really shut up and stop touting
+you their magic medicine. But as long as Sylvain started dedicated topic for collecting feedback
+about CherryPy&amp;#8217;s official Docker image &lt;a class="footnote-reference" href="#id106" id="id47"&gt;[40]&lt;/a&gt;, I was one who unintentionally started this
+discussion (we talked about Drone.io test environment which is a Docker), and wanted to reply
+anyway, I started investigating what the thing that causes itch not only to all the cool kids is
+really about, except it eliminates &lt;em&gt;ops&lt;/em&gt; as a class and cures indigestion by the&amp;nbsp;way.&lt;/p&gt;
+&lt;p&gt;I have to admit that as soon as I have gotten to the original source of information, have listened
+to a couple of Solomon&amp;#8217;s interviews and talks and seen how he was involved into Docker reputation
+management by replying to various critical articles, I became more well-disposed toward the
+project. Solomon himself looks like a positive and nice kind of guy who knows what he is doing.
+Not as nice, actually, as if he hadn&amp;#8217;t rewritten DotCloud&amp;#8217;s Python code to next Google&amp;#8217;s attempt
+at language engineering, though reasonably nice anyway. You may often see him saying something
+like this &lt;a class="footnote-reference" href="#id107" id="id48"&gt;[41]&lt;/a&gt;:&lt;/p&gt;
+&lt;blockquote&gt;
+I know that Docker is pretty hyped right now &amp;#8212; I personally think it&amp;#8217;s a mixed blessing
+for exactly this reason: unexperienced people are bound to talk about Docker, and say stupid
+things about what Docker can do and how to use it. I wish I could magically prevent this.&lt;/blockquote&gt;
+&lt;p&gt;So I ought to limit myself in saying stupid things&amp;nbsp;;-)&lt;/p&gt;
+&lt;div class="section" id="nature"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id137"&gt;Nature&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;Basically Docker is like Vagrant + OpenVZ on vanilla kernel. The two are available for
+quite some time and have established use cases, reproducible development environment and
+lightweight, operating-system-level virtualisation &lt;a class="footnote-reference" href="#id108" id="id49"&gt;[42]&lt;/a&gt;, respectively. Although Docker combines
+the two qualities, and it&amp;#8217;s tempting to (re)think that developers can build production-ready
+container images and deploy them through Docker magic powers, and that it&amp;#8217;s what Docker is
+designated for, it would be a mistake to say&amp;nbsp;so.&lt;/p&gt;
+&lt;p&gt;As Solomon says, Docker is mere a building block that comes in at the right time and provides
+high-level APIs for set of great low-level features modern Linux kernel has. There are several
+things I want to summarise from his latest interview given to &lt;span class="caps"&gt;FLOSS&lt;/span&gt; Weekly in episode 330 &lt;a class="footnote-reference" href="#id109" id="id50"&gt;[43]&lt;/a&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;it is not a silver bullet, it is a building&amp;nbsp;block&lt;/li&gt;
+&lt;li&gt;it is used both ways: as &lt;span class="caps"&gt;VM&lt;/span&gt; and as &amp;#8220;binary&amp;#8221; (process-per-container); neither is the &amp;#8220;true&amp;#8221;&amp;nbsp;one&lt;/li&gt;
+&lt;li&gt;it is neither superior nor mutually exclusive with configuration&amp;nbsp;management&lt;/li&gt;
+&lt;li&gt;it is not a complete production solution; production is hard and is left to the&amp;nbsp;reader&lt;/li&gt;
+&lt;li&gt;it doesn&amp;#8217;t primarily target homogenous applications; the platform&amp;#8217;s tools may be&amp;nbsp;sufficient&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I would agree that except first one, one might find &amp;#8220;however&amp;#8221; to any of them. And especially,
+considering the pace of development, and promising trio of new experimental tools, that appeared
+to come along Docker for cluster orchestration, in Unix-way of loosely coupled components and
+responsibility separation: Machine, Swarm and Compose &lt;a class="footnote-reference" href="#id110" id="id51"&gt;[44]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;And I really like to think about Docker as a building block. No matter what the hype is, even
+though it entails imbalance in available information, there&amp;#8217;re certain design decisions made
+that have certain implications. Taking them into account you  decide whether Docker fits your
+certain task. For instance, there was a good comparison, &lt;span class="caps"&gt;LXC&lt;/span&gt; versus Docker, by Flockport &lt;a class="footnote-reference" href="#id111" id="id52"&gt;[45]&lt;/a&gt;,
+which emphasises the difference between the two as long as Docker goes with own &lt;em&gt;libcontainer&lt;/em&gt;:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;performance penalty for a layered filesystem (e.g. &lt;span class="caps"&gt;AUFS&lt;/span&gt;)&lt;/li&gt;
+&lt;li&gt;separate persistence management for immutable&amp;nbsp;containers&lt;/li&gt;
+&lt;li&gt;process-per-container design has issues with real world &lt;a class="footnote-reference" href="#id112" id="id53"&gt;[46]&lt;/a&gt;:&lt;ul&gt;
+&lt;li&gt;most of existing software is written in expectation of &lt;em&gt;init&lt;/em&gt;&amp;nbsp;system&lt;/li&gt;
+&lt;li&gt;monitoring, cron jobs, system logging need a dedicated daemon and/or &lt;span class="caps"&gt;SSH&lt;/span&gt;&amp;nbsp;daemon&lt;/li&gt;
+&lt;li&gt;system built of subsystems built of components is much harder to&amp;nbsp;manage&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;As I said above both process-per-container and application-per-container both have merit. But
+because Docker originally was conceived with the former idea, most images in Docker Hub are
+process-per-container and people begin to fight the tool they have chosen by using Bash scripts,
+Monit or Supervisor to manage multiple&amp;nbsp;processes.&lt;/p&gt;
+&lt;p&gt;Complete configuration management products, like Ansible, or even simpler Fabric-based approaches
+in conjunction with abundance of &lt;span class="caps"&gt;API&lt;/span&gt; for every single IaaS and PaaS provider made available
+infrastructure as code with any desired quality long before Docker appeared. Big companies were
+implementing their own infrastructure-as-code solutions on top of chosen service provider. Smaller
+companies mostly weren&amp;#8217;t in the game. Docker, because of its momentum, can standardise service
+providers&amp;#8217; supply and popularise infrastructure as code in the industry which I see quite&amp;nbsp;advantageous.&lt;/p&gt;
+&lt;p&gt;Another thing that shoundn&amp;#8217;t fall out of your sight is that Docker is a new technology. It has
+known and significant risk for new security issues &lt;a class="footnote-reference" href="#id113" id="id54"&gt;[47]&lt;/a&gt;. And even in its own realm it is not
+as nearly as perfect. Indeed Docker makes clearer responsibility separation between &lt;em&gt;devs&lt;/em&gt; and
+&lt;em&gt;ops&lt;/em&gt;. But there are cross-boundary configuration, like maximum open file handles or system
+networking settings which need to be set on host and have corresponding configuration in
+container, e.g. MySQL table cache. There are environment-specific configuration like load testing
+in &lt;span class="caps"&gt;QA&lt;/span&gt; and rate-limiting in production. There is a lot more of such things to consider in real&amp;nbsp;system.&lt;/p&gt;
+&lt;p&gt;There is a lot of discussion of microservice architecture &lt;a class="footnote-reference" href="#id114" id="id55"&gt;[48]&lt;/a&gt; today. One of its aspects is that
+what was inner-application complexity is now shifted into infrastructure. And the more you follow
+this route the more you immerse into distributed computing while distributed computing is still
+very hard. Docker guidelines go clearly along the&amp;nbsp;route.&lt;/p&gt;
+&lt;blockquote&gt;
+Lately I&amp;#8217;ve seen a comprehensive and all around excellent presentation on distributed computing
+by Jonas Bonér &lt;a class="footnote-reference" href="#id115" id="id56"&gt;[49]&lt;/a&gt;. Although it&amp;#8217;s named &amp;#8220;The Road to Akka Cluster and Beyond&amp;#8221; the Akka, which
+is distributed application toolkit for &lt;span class="caps"&gt;JVM&lt;/span&gt;, part starts around 3/4 of the slides. The rest is
+overview, theoretical aspects and practical challenges of distributed computing.&lt;/blockquote&gt;
+&lt;p&gt;Last thing to say in this section is about Docker&amp;#8217;s competitors. There are obviously other fish
+in the sea. Besides already mentioned &lt;span class="caps"&gt;LXC&lt;/span&gt; &lt;a class="footnote-reference" href="#id116" id="id57"&gt;[50]&lt;/a&gt;, there are also newer container tools built on
+experience with existing tools, realising their shortcomings and addressing them. To name a
+few: Rocket &lt;a class="footnote-reference" href="#id117" id="id58"&gt;[51]&lt;/a&gt;, Vagga &lt;a class="footnote-reference" href="#id118" id="id59"&gt;[52]&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="application"&gt;
+&lt;h3&gt;&lt;a class="toc-backref" href="#id138"&gt;Application&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;With that being said I think thorough discussion of infrastructure and distributed application
+design within the scope of CherryPy project is not only a off-topic. It&amp;#8217;s a hugely out of the
+context. However the topic itself is actual and interesting, but I&amp;#8217;m sure everyone who is
+dealing or is willing to deal with an application at scale knows how to run
+&lt;tt class="docutils literal"&gt;pip install cherrypy&lt;/tt&gt;.&lt;/p&gt;
+&lt;p&gt;What I already told to Sylvain, is on-topic and CherryPy &lt;span class="caps"&gt;QA&lt;/span&gt; can benefit from is Docker
+&lt;span class="caps"&gt;QA&lt;/span&gt; image with complete CherryPy test suite containing all environments and dependencies so every
+contributor can take it and run the test suite against introduced changes effortlessly. Here&amp;#8217;s
+a &lt;em&gt;dockerfile&lt;/em&gt; for the&amp;nbsp;purpose.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;FROM ubuntu:trusty
+
+MAINTAINER CherryPy QA Team
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get --no-install-recommends -qy install python python-dev python3 python3-dev \
+  python-pip python-virtualenv
+RUN apt-get --no-install-recommends -qy install software-properties-common build-essential \
+  libffi-dev mercurial ca-certificates memcached
+
+RUN add-apt-repository ppa:fkrull/deadsnakes
+RUN apt-get update
+RUN apt-get --no-install-recommends -qy install python2.6 python2.6-dev python3.3 python3.3-dev
+
+RUN pip install &amp;quot;tox &amp;lt; 2&amp;quot;
+RUN pip install &amp;quot;detox &amp;lt; 0.10&amp;quot;
+
+WORKDIR /root
+RUN hg clone --branch default https://bitbucket.org/saaj/cherrypy
+
+WORKDIR /root/cherrypy
+RUN echo &amp;#39;#!/bin/bash\n \
+  service memcached start; hg pull --branch default --update; tox &amp;quot;$@&amp;quot;&amp;#39; &amp;gt; serial.sh
+RUN echo &amp;#39;#!/bin/bash\n \
+  service memcached start; hg pull --branch default --update; detox &amp;quot;$@&amp;quot;&amp;#39; &amp;gt; parallel.sh
+RUN chmod u+x serial.sh parallel.sh
+ENTRYPOINT [&amp;quot;./serial.sh&amp;quot;]
+&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;tt class="docutils literal"&gt;hg clone&lt;/tt&gt; line should be changed to the source of changes. Thus I think we should distribute
+it just as a &lt;em&gt;dockerfile&lt;/em&gt;. Because of development dependencies it isn&amp;#8217;t small &amp;#8212; ~620 &lt;span class="caps"&gt;MB&lt;/span&gt;.
+I also made parallel Detox run possible, &lt;tt class="docutils literal"&gt;parallel.sh&lt;/tt&gt;, but I think usually running an
+environment at a time is better to stress tests with more concurrency. What&amp;#8217;s really nice about it
+is that it can be run just like a&amp;nbsp;binary.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;docker run -it cherrypy/qa -e &lt;span class="s2"&gt;&amp;quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&amp;quot;&lt;/span&gt; &lt;span class="se"&gt;\&lt;/span&gt;
+  -- -v cherrypy.test.test_http cherrypy.test.test_conn.TestLimitedRequestQueue
+&lt;/pre&gt;&lt;/div&gt;
+&lt;div class="section" id="side-project"&gt;
+&lt;h4&gt;Side-project&lt;/h4&gt;
+&lt;p&gt;As I said, I think that certain answers to questions of infrastructure, orchestration or
+application design are off-topic inside the project. CherryPy was never meant to answer them.
+But it&amp;#8217;s really nice to have all this information available nearby. Like the series of posts
+Sylvain wrote in his blog &lt;a class="footnote-reference" href="#id119" id="id60"&gt;[53]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Sylvain, I can give you a starting point if you wish. I have a CherryPy project,
+&lt;em&gt;cherrypy-webapp-skeleton&lt;/em&gt; &lt;a class="footnote-reference" href="#id120" id="id61"&gt;[54]&lt;/a&gt;, which is a complete, traditional CherryPy deployment on Debain.
+I had a &lt;em&gt;fabfile&lt;/em&gt; &lt;a class="footnote-reference" href="#id121" id="id62"&gt;[55]&lt;/a&gt; there which I used test the tutorial against a fresh Debain virtual
+machine. What I did is I basically translated in into a &lt;em&gt;dockerfile&lt;/em&gt; &lt;a class="footnote-reference" href="#id122" id="id63"&gt;[56]&lt;/a&gt;. It&amp;#8217;s a
+virtual machine style, application-per-container thing, and it&amp;#8217;s good for testing. It is also
+one of possible ways of deployment, but it obviously doesn&amp;#8217;t provide means to scaling. So if
+you&amp;#8217;re interested in splitting it to separate containers and providing configuration for
+containers and orchestration for such an example I would surely accept your changes. You&amp;#8217;re
+also free to point me if you see something is wrong there &amp;#8212; it&amp;#8217;s all&amp;nbsp;discussable.&lt;/p&gt;
+&lt;p&gt;In case you&amp;#8217;re interested I&amp;#8217;ll give an overview of the project and at the same time address
+some of your&amp;nbsp;questions:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;components as-is: CherryPy, Nginx, MySQL,&amp;nbsp;Monit&lt;/li&gt;
+&lt;li&gt;containers to-be: 2 x CherryPy, Nginx,&amp;nbsp;MySQL&lt;/li&gt;
+&lt;li&gt;it runs through &lt;em&gt;init&lt;/em&gt; script which calls &lt;em&gt;cherryd&lt;/em&gt;-like&amp;nbsp;daemon&lt;/li&gt;
+&lt;li&gt;it is installed into a &lt;em&gt;virtualenv&lt;/em&gt; but it probably doesn&amp;#8217;t make sense in a&amp;nbsp;container&lt;/li&gt;
+&lt;li&gt;we outght to adhere to distro standard directory layout (&lt;tt class="docutils literal"&gt;/var/www&lt;/tt&gt;, &lt;tt class="docutils literal"&gt;/var/logs&lt;/tt&gt;,
+etc.), but the extent is in&amp;nbsp;question&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If we will present it as an example we must also address &lt;em&gt;init&lt;/em&gt; system and other issues &lt;a class="footnote-reference" href="#id112" id="id64"&gt;[46]&lt;/a&gt;,
+in some way, I wrote&amp;nbsp;above.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="questions"&gt;
+&lt;h2&gt;&lt;a class="toc-backref" href="#id139"&gt;Questions&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;For these I can expect the answers only from Sylvain, but others&amp;#8217; ideas are also&amp;nbsp;welcomed.&lt;/p&gt;
+&lt;ol class="arabic simple"&gt;
+&lt;li&gt;Will you review my changes in the fork &lt;a class="footnote-reference" href="#id71" id="id65"&gt;[5]&lt;/a&gt;? Or it&amp;#8217;s easier if I&amp;#8217;ve created a pull
+request right&amp;nbsp;away?&lt;/li&gt;
+&lt;li&gt;Can you update documentation to explicitly express the state of our &lt;span class="caps"&gt;SSL&lt;/span&gt; support? I
+think it is needed as soon as&amp;nbsp;possible.&lt;/li&gt;
+&lt;li&gt;Do we have any progress on&amp;nbsp;bugtracker?&lt;/li&gt;
+&lt;li&gt;As you have already mentioned a CherryPy roadmap, I think, it&amp;#8217;s getting a direction, like:
+3.7 for &lt;span class="caps"&gt;QA&lt;/span&gt;, 3.8 for &lt;span class="caps"&gt;SSL&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;I still want to hear about your ideas about &lt;tt class="docutils literal"&gt;test_gc&lt;/tt&gt;.&lt;/li&gt;
+&lt;li&gt;We still have this outdated and poitless wiki home as landing page for the&amp;nbsp;repo.&lt;/li&gt;
+&lt;li&gt;Recent coverage report &lt;a class="footnote-reference" href="#id74" id="id66"&gt;[8]&lt;/a&gt; uncovered that we have a dozen with zero-coverage modules which
+are probably&amp;nbsp;obsolete.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr class="docutils" /&gt;
+&lt;table class="docutils footnote" frame="void" id="id67" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id1"&gt;[1]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://wiki.python.org/moin/GlobalInterpreterLock"&gt;https://wiki.python.org/moin/GlobalInterpreterLock&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id68" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id2"&gt;[2]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.dabeaz.com/python/NewGIL.pdf"&gt;http://www.dabeaz.com/python/NewGIL.pdf&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id69" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id3"&gt;[3]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Integration_testing"&gt;http://en.wikipedia.org/wiki/Integration_testing&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id70" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id4"&gt;[4]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/System_testing"&gt;http://en.wikipedia.org/wiki/System_testing&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id71" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[5]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id5"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id65"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy"&gt;https://bitbucket.org/saaj/cherrypy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id72" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[6]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id6"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id14"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/Qm-uLscS4z4"&gt;https://groups.google.com/forum/#!topic/cherrypy-users/Qm-uLscS4z4&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id73" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id7"&gt;[7]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://drone.io/bitbucket.org/saaj/cherrypy"&gt;https://drone.io/bitbucket.org/saaj/cherrypy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id74" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[8]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id8"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id66"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://codecov.io/bitbucket/saaj/cherrypy?ref=default"&gt;https://codecov.io/bitbucket/saaj/cherrypy?ref=default&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id75" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id9"&gt;[9]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://tox.rtfd.org/en/latest/example/pytest.html#known-issues-and-limitations"&gt;http://tox.rtfd.org/en/latest/example/pytest.html#known-issues-and-limitations&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id76" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id10"&gt;[10]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://launchpad.net/~fkrull/+archive/ubuntu/deadsnakes"&gt;https://launchpad.net/~fkrull/+archive/ubuntu/deadsnakes&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id77" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id11"&gt;[11]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://tox.readthedocs.org/en/latest/config-v2.html"&gt;http://tox.readthedocs.org/en/latest/config-v2.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id78" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id12"&gt;[12]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy/src/default/cherrypy/test/xmltestreport.py"&gt;https://bitbucket.org/saaj/cherrypy/src/default/cherrypy/test/xmltestreport.py&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id79" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id13"&gt;[13]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html"&gt;http://google-opensource.blogspot.com/2015/03/farewell-to-google-code.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id80" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[14]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id15"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id31"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://cherrypy.readthedocs.org/en/latest/deploy.html#ssl-support"&gt;http://cherrypy.readthedocs.org/en/latest/deploy.html#ssl-support&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id81" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id16"&gt;[15]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://stackoverflow.com/q/29260947/2072035"&gt;http://stackoverflow.com/q/29260947/2072035&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id82" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[16]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id19"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id28"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2011/10/31/tls-renegotiation-and-denial-of-service-attacks"&gt;https://community.qualys.com/blogs/securitylabs/2011/10/31/tls-renegotiation-and-denial-of-service-attacks&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id83" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id20"&gt;[17]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-tls-downgrade-scsv/"&gt;https://datatracker.ietf.org/doc/draft-ietf-tls-downgrade-scsv/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id84" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id21"&gt;[18]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2013/06/25/ssl-labs-deploying-forward-secrecy"&gt;https://community.qualys.com/blogs/securitylabs/2013/06/25/ssl-labs-deploying-forward-secrecy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id85" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id23"&gt;[19]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2014/10/15/ssl-3-is-dead-killed-by-the-poodle-attack"&gt;https://community.qualys.com/blogs/securitylabs/2014/10/15/ssl-3-is-dead-killed-by-the-poodle-attack&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id86" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id24"&gt;[20]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2012/09/14/crime-information-leakage-attack-against-ssltls"&gt;https://community.qualys.com/blogs/securitylabs/2012/09/14/crime-information-leakage-attack-against-ssltls&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id87" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id25"&gt;[21]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://www.python.org/downloads/release/python-279/"&gt;https://www.python.org/downloads/release/python-279/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id88" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[22]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id26"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id35"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://www.python.org/dev/peps/pep-0466/"&gt;https://www.python.org/dev/peps/pep-0466/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id89" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id27"&gt;[23]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://www.python.org/dev/peps/pep-0476/"&gt;https://www.python.org/dev/peps/pep-0476/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id90" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id29"&gt;[24]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2013/03/19/rc4-in-tls-is-broken-now-what"&gt;https://community.qualys.com/blogs/securitylabs/2013/03/19/rc4-in-tls-is-broken-now-what&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id91" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id22"&gt;[25]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Forward_secrecy"&gt;http://en.wikipedia.org/wiki/Forward_secrecy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id92" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id17"&gt;[26]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2014/09/09/sha1-deprecation-what-you-need-to-know"&gt;https://community.qualys.com/blogs/securitylabs/2014/09/09/sha1-deprecation-what-you-need-to-know&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id93" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[27]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id30"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id32"&gt;2&lt;/a&gt;, &lt;a class="fn-backref" href="#id33"&gt;3&lt;/a&gt;, &lt;a class="fn-backref" href="#id36"&gt;4&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://docs.python.org/2/library/ssl.html#ssl-contexts"&gt;https://docs.python.org/2/library/ssl.html#ssl-contexts&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id94" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[28]&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://docs.python.org/2/library/ssl.html#ssl.create_default_context"&gt;https://docs.python.org/2/library/ssl.html#ssl.create_default_context&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id95" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id34"&gt;[29]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://hg.python.org/cpython/file/5b5a22b9327b/Lib/ssl.py#l395"&gt;https://hg.python.org/cpython/file/5b5a22b9327b/Lib/ssl.py#l395&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id96" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id37"&gt;[30]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning"&gt;https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id97" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id38"&gt;[31]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://github.com/nabla-c0d3/sslyze"&gt;https://github.com/nabla-c0d3/sslyze&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id98" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id39"&gt;[32]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://community.qualys.com/blogs/securitylabs/2015/01/22/ssl-labs-apis-now-available-in-beta"&gt;https://community.qualys.com/blogs/securitylabs/2015/01/22/ssl-labs-apis-now-available-in-beta&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id99" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id40"&gt;[33]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://www.ssllabs.com/projects/ssllabs-apis/"&gt;https://www.ssllabs.com/projects/ssllabs-apis/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id100" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[34]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id18"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id41"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="https://www.ssllabs.com/ssltest/"&gt;https://www.ssllabs.com/ssltest/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id101" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id42"&gt;[35]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://forum.nginx.org/read.php?2,234641,234641"&gt;http://forum.nginx.org/read.php?2,234641,234641&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id102" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id43"&gt;[36]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://serversforhackers.com/using-ssl-certificates-with-haproxy"&gt;https://serversforhackers.com/using-ssl-certificates-with-haproxy&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id103" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id44"&gt;[37]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://scriptthe.net/2015/02/08/pass-through-ssl-with-haproxy/"&gt;https://scriptthe.net/2015/02/08/pass-through-ssl-with-haproxy/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id104" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id45"&gt;[38]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.xaprb.com/blog/2015/02/07/devops-identity-crisis/"&gt;http://www.xaprb.com/blog/2015/02/07/devops-identity-crisis/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id105" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id46"&gt;[39]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.youtube.com/watch?v=UP6HxoC66nw"&gt;http://www.youtube.com/watch?v=UP6HxoC66nw&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id106" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id47"&gt;[40]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://groups.google.com/forum/#!topic/cherrypy-users/WywUwX8dGOM"&gt;https://groups.google.com/forum/#!topic/cherrypy-users/WywUwX8dGOM&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id107" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id48"&gt;[41]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.krisbuytaert.be/blog/docker-vs-reality-0-1#comment-5449"&gt;http://www.krisbuytaert.be/blog/docker-vs-reality-0-1#comment-5449&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id108" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id49"&gt;[42]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Operating-system-level_virtualization"&gt;http://en.wikipedia.org/wiki/Operating-system-level_virtualization&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id109" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id50"&gt;[43]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://twit.tv/show/floss-weekly/330"&gt;http://twit.tv/show/floss-weekly/330&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id110" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id51"&gt;[44]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://blog.docker.com/2015/02/orchestrating-docker-with-machine-swarm-and-compose/"&gt;http://blog.docker.com/2015/02/orchestrating-docker-with-machine-swarm-and-compose/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id111" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id52"&gt;[45]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.flockport.com/lxc-vs-docker/"&gt;http://www.flockport.com/lxc-vs-docker/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id112" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[46]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id53"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id64"&gt;2&lt;/a&gt;)&lt;/em&gt; &lt;a class="reference external" href="http://phusion.github.io/baseimage-docker/"&gt;http://phusion.github.io/baseimage-docker/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id113" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id54"&gt;[47]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://zeltser.com/security-risks-and-benefits-of-docker-application/"&gt;https://zeltser.com/security-risks-and-benefits-of-docker-application/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id114" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id55"&gt;[48]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://martinfowler.com/articles/microservices.html"&gt;http://martinfowler.com/articles/microservices.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id115" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id56"&gt;[49]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.slideshare.net/jboner/the-road-to-akka-cluster-and-beyond"&gt;http://www.slideshare.net/jboner/the-road-to-akka-cluster-and-beyond&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id116" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id57"&gt;[50]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://linuxcontainers.org/"&gt;https://linuxcontainers.org/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id117" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id58"&gt;[51]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://coreos.com/blog/rocket/"&gt;https://coreos.com/blog/rocket/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id118" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id59"&gt;[52]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://vagga.readthedocs.org/en/latest/what_is_vagga.html"&gt;http://vagga.readthedocs.org/en/latest/what_is_vagga.html&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id119" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id60"&gt;[53]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="http://www.defuze.org/"&gt;http://www.defuze.org/&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id120" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id61"&gt;[54]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy-webapp-skeleton"&gt;https://bitbucket.org/saaj/cherrypy-webapp-skeleton&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id121" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id62"&gt;[55]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/backend/fabfile.py"&gt;https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/backend/fabfile.py&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id122" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id63"&gt;[56]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;&lt;a class="reference external" href="https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/system/docker/Dockerfile"&gt;https://bitbucket.org/saaj/cherrypy-webapp-skeleton/src/system/docker/Dockerfile&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+</content><category term="cherrypy"></category><category term="python"></category><category term="testing"></category><category term="ssl"></category><category term="docker"></category></entry></feed>

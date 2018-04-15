@@ -183,7 +183,7 @@ for 3 tests. They are now just skipped under PyDev&nbsp;runner.</li>
 <p>Here&#8217;s Drone.io commands required to run the test suite. It uses Deadsnakes <a class="footnote-reference" href="#id76" id="id10">[10]</a> to install old
 or not yet stable version of Python. Development versions are needed to build pyOpenSSL. The rest
 comes with Drone.io container out of the&nbsp;box.</p>
-<div class="highlight"><pre><span class="nb">echo</span> <span class="s1">&#39;debconf debconf/frontend select noninteractive&#39;</span> <span class="p">|</span> sudo debconf-set-selections
+<div class="highlight"><pre><span></span><span class="nb">echo</span> <span class="s1">&#39;debconf debconf/frontend select noninteractive&#39;</span> <span class="p">|</span> sudo debconf-set-selections
 sudo add-apt-repository ppa:fkrull/deadsnakes <span class="p">&amp;</span>&gt; /dev/null
 sudo apt-get update <span class="p">&amp;</span>&gt; /dev/null
 sudo apt-get -y install python2.6 python3.4 <span class="p">&amp;</span>&gt; /dev/null
@@ -211,7 +211,7 @@ code_complexity.txt
 led by tradeoffs between test duration, combined coverage report and need to test dependencies.
 I came to the last design after I realised importance of support of pyOpenSSL and thus the need to
 test it (see about <span class="caps">SSL</span> issues below). Then test sampling facility was easy to integrate to&nbsp;it.</p>
-<div class="highlight"><pre><span class="k">[tox]</span>
+<div class="highlight"><pre><span></span><span class="k">[tox]</span>
 <span class="na">minversion</span> <span class="o">=</span> <span class="s">1.8</span>
 <span class="na">envlist</span>    <span class="o">=</span> <span class="s">pre,docs,py{26-co,27-qa,33-nt,34-qa}{,-ssl,-ossl}</span>
 
@@ -318,7 +318,7 @@ that makes sense though, with desired qualities can be constructed even if it is
 </table>
 <p>Note <tt class="docutils literal">{posargs: discover <span class="pre">-v</span> cherrypy.test}</tt> part. It makes possible to run a subset of the
 test suite in desired environments,&nbsp;e.g.:</p>
-<div class="highlight"><pre>tox -e <span class="s2">&quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&quot;</span> -- -v cherrypy.test.test_http <span class="se">\</span>
+<div class="highlight"><pre><span></span>tox -e <span class="s2">&quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&quot;</span> -- -v cherrypy.test.test_http <span class="se">\</span>
   cherrypy.test.test_conn.TestLimitedRequestQueue <span class="se">\</span>
   cherrypy.test.test_caching.TestCache.test_antistampede
 </pre></div>
@@ -335,7 +335,7 @@ Then it was just a need to write some glue code for overnight runs and implement
 <p>I&#8217;ve implemented and incorporated module named <tt class="docutils literal">xmltestreport</tt> <a class="footnote-reference" href="#id78" id="id12">[12]</a> into the <tt class="docutils literal">test</tt>
 package. <tt class="docutils literal">sa</tt> Tox tag corresponds to it. Running the following in terminal at evening,
 at morning can give you the following table (except N/A evironments, see&nbsp;below).</p>
-<div class="highlight"><pre><span class="k">for</span> i in <span class="o">{</span>1..64<span class="o">}</span><span class="p">;</span> <span class="k">do</span> tox -e <span class="s2">&quot;py{26,27,33,34}-sa{,-ssl,-ossl}&quot;</span><span class="p">;</span> <span class="k">done</span>
+<div class="highlight"><pre><span></span><span class="k">for</span> i in <span class="o">{</span><span class="m">1</span>..64<span class="o">}</span><span class="p">;</span> <span class="k">do</span> tox -e <span class="s2">&quot;py{26,27,33,34}-sa{,-ssl,-ossl}&quot;</span><span class="p">;</span> <span class="k">done</span>
 tox -e report
 </pre></div>
 <table border="1" class="docutils">
@@ -672,8 +672,8 @@ workaround them and configure CherryPy to serve an application over <span class=
 <p>Recently there was a CherryPy StackOverflow question right about the topic <a class="footnote-reference" href="#id81" id="id16">[15]</a>. The guy asked
 <em>how to block <span class="caps">SSL</span> protocols in favour of <span class="caps">TLS</span></em>. It led me to coming to the following
 quick-and-dirty&nbsp;solution.</p>
-<div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
-<span class="c"># -*- coding: utf-8 -*-</span>
+<div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
 
 
 <span class="kn">import</span> <span class="nn">os</span>
@@ -697,22 +697,22 @@ quick-and-dirty&nbsp;solution.</p>
 
 
 <span class="n">ciphers</span> <span class="o">=</span> <span class="p">(</span>
-  <span class="s">&#39;ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:&#39;</span>
-  <span class="s">&#39;DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:&#39;</span>
-  <span class="s">&#39;!eNULL:!MD5:!DSS:!RC4:!SSLv2&#39;</span>
+  <span class="s1">&#39;ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+HIGH:&#39;</span>
+  <span class="s1">&#39;DH+HIGH:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+HIGH:RSA+3DES:!aNULL:&#39;</span>
+  <span class="s1">&#39;!eNULL:!MD5:!DSS:!RC4:!SSLv2&#39;</span>
 <span class="p">)</span>
 
-<span class="n">bundle</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cherrypy</span><span class="o">.</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;test&#39;</span><span class="p">,</span> <span class="s">&#39;test.pem&#39;</span><span class="p">)</span>
+<span class="n">bundle</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cherrypy</span><span class="o">.</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="s1">&#39;test.pem&#39;</span><span class="p">)</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="s">&#39;global&#39;</span> <span class="p">:</span> <span class="p">{</span>
-    <span class="s">&#39;server.socket_host&#39;</span> <span class="p">:</span> <span class="s">&#39;127.0.0.1&#39;</span><span class="p">,</span>
-    <span class="s">&#39;server.socket_port&#39;</span> <span class="p">:</span> <span class="mi">8443</span><span class="p">,</span>
-    <span class="s">&#39;server.thread_pool&#39;</span> <span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+  <span class="s1">&#39;global&#39;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s1">&#39;server.socket_host&#39;</span> <span class="p">:</span> <span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;server.socket_port&#39;</span> <span class="p">:</span> <span class="mi">8443</span><span class="p">,</span>
+    <span class="s1">&#39;server.thread_pool&#39;</span> <span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
 
-    <span class="s">&#39;server.ssl_module&#39;</span>      <span class="p">:</span> <span class="s">&#39;custom-pyopenssl&#39;</span><span class="p">,</span>
-    <span class="s">&#39;server.ssl_certificate&#39;</span> <span class="p">:</span> <span class="n">bundle</span><span class="p">,</span>
-    <span class="s">&#39;server.ssl_private_key&#39;</span> <span class="p">:</span> <span class="n">bundle</span><span class="p">,</span>
+    <span class="s1">&#39;server.ssl_module&#39;</span>      <span class="p">:</span> <span class="s1">&#39;custom-pyopenssl&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;server.ssl_certificate&#39;</span> <span class="p">:</span> <span class="n">bundle</span><span class="p">,</span>
+    <span class="s1">&#39;server.ssl_private_key&#39;</span> <span class="p">:</span> <span class="n">bundle</span><span class="p">,</span>
   <span class="p">}</span>
 <span class="p">}</span>
 
@@ -733,7 +733,7 @@ quick-and-dirty&nbsp;solution.</p>
     <span class="k">try</span><span class="p">:</span>
       <span class="n">s</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span>
         <span class="n">sock</span><span class="p">,</span>
-        <span class="n">ciphers</span> <span class="o">=</span> <span class="n">ciphers</span><span class="p">,</span> <span class="c"># the override is for this line</span>
+        <span class="n">ciphers</span> <span class="o">=</span> <span class="n">ciphers</span><span class="p">,</span> <span class="c1"># the override is for this line</span>
         <span class="n">do_handshake_on_connect</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
         <span class="n">server_side</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
         <span class="n">certfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">certificate</span><span class="p">,</span>
@@ -743,23 +743,23 @@ quick-and-dirty&nbsp;solution.</p>
     <span class="k">except</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">:</span>
       <span class="n">e</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
       <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_EOF</span><span class="p">:</span>
-        <span class="c"># This is almost certainly due to the cherrypy engine</span>
-        <span class="c"># &#39;pinging&#39; the socket to assert it&#39;s connectable;</span>
-        <span class="c"># the &#39;ping&#39; isn&#39;t SSL.</span>
+        <span class="c1"># This is almost certainly due to the cherrypy engine</span>
+        <span class="c1"># &#39;pinging&#39; the socket to assert it&#39;s connectable;</span>
+        <span class="c1"># the &#39;ping&#39; isn&#39;t SSL.</span>
         <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{}</span>
       <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSL_ERROR_SSL</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;http request&#39;</span><span class="p">):</span>
-          <span class="c"># The client is speaking HTTP to an HTTPS server.</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;http request&#39;</span><span class="p">):</span>
+          <span class="c1"># The client is speaking HTTP to an HTTPS server.</span>
           <span class="k">raise</span> <span class="n">wsgiserver</span><span class="o">.</span><span class="n">NoSSLError</span>
-        <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;unknown protocol&#39;</span><span class="p">):</span>
-          <span class="c"># The client is speaking some non-HTTP protocol.</span>
-          <span class="c"># Drop the conn.</span>
+        <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;unknown protocol&#39;</span><span class="p">):</span>
+          <span class="c1"># The client is speaking some non-HTTP protocol.</span>
+          <span class="c1"># Drop the conn.</span>
           <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{}</span>
       <span class="k">raise</span>
 
     <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_environ</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-<span class="n">ssl_adapters</span><span class="p">[</span><span class="s">&#39;custom-ssl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BuiltinSsl</span>
+<span class="n">ssl_adapters</span><span class="p">[</span><span class="s1">&#39;custom-ssl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BuiltinSsl</span>
 
 
 <span class="k">class</span> <span class="nc">Pyopenssl</span><span class="p">(</span><span class="n">pyOpenSSLAdapter</span><span class="p">):</span>
@@ -772,7 +772,7 @@ quick-and-dirty&nbsp;solution.</p>
     <span class="sd">&quot;&quot;&quot;Return an SSL.Context from self attributes.&quot;&quot;&quot;</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">SSL</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="n">SSL</span><span class="o">.</span><span class="n">SSLv23_METHOD</span><span class="p">)</span>
 
-    <span class="c"># override:</span>
+    <span class="c1"># override:</span>
     <span class="n">c</span><span class="o">.</span><span class="n">set_options</span><span class="p">(</span><span class="n">SSL</span><span class="o">.</span><span class="n">OP_NO_COMPRESSION</span> <span class="o">|</span> <span class="n">SSL</span><span class="o">.</span><span class="n">OP_SINGLE_DH_USE</span> <span class="o">|</span> <span class="n">SSL</span><span class="o">.</span><span class="n">OP_NO_SSLv2</span> <span class="o">|</span> <span class="n">SSL</span><span class="o">.</span><span class="n">OP_NO_SSLv3</span><span class="p">)</span>
     <span class="n">c</span><span class="o">.</span><span class="n">set_cipher_list</span><span class="p">(</span><span class="n">ciphers</span><span class="p">)</span>
 
@@ -782,18 +782,18 @@ quick-and-dirty&nbsp;solution.</p>
     <span class="n">c</span><span class="o">.</span><span class="n">use_certificate_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">certificate</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">c</span>
 
-<span class="n">ssl_adapters</span><span class="p">[</span><span class="s">&#39;custom-pyopenssl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pyopenssl</span>
+<span class="n">ssl_adapters</span><span class="p">[</span><span class="s1">&#39;custom-pyopenssl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pyopenssl</span>
 
 
 <span class="k">class</span> <span class="nc">App</span><span class="p">:</span>
 
   <span class="nd">@cherrypy.expose</span>
   <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s">&#39;&lt;em&gt;Is this secure?&lt;/em&gt;&#39;</span>
+    <span class="k">return</span> <span class="s1">&#39;&lt;em&gt;Is this secure?&lt;/em&gt;&#39;</span>
 
 
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-  <span class="n">cherrypy</span><span class="o">.</span><span class="n">quickstart</span><span class="p">(</span><span class="n">App</span><span class="p">(),</span> <span class="s">&#39;/&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+  <span class="n">cherrypy</span><span class="o">.</span><span class="n">quickstart</span><span class="p">(</span><span class="n">App</span><span class="p">(),</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 </pre></div>
 <p>After I regenerated our test certificate&nbsp;to:</p>
 <ul class="simple">
@@ -956,7 +956,7 @@ binary that comes from a disto&#8217;s repository have their own version of Open
 breach is discovered it is reasonable to expect patched OpenSSL package to be shipped first.
 This gives an user ability to rebuild pyOpenSSL with latest OpenSSL as soon as possible in matter
 of&nbsp;doing:</p>
-<div class="highlight"><pre>pip install -I pyOpenSSL
+<div class="highlight"><pre><span></span>pip install -I pyOpenSSL
 </pre></div>
 <p>Embracing this purpose Python 3 support should be provided. Currently
 <tt class="docutils literal">pyOpenSSLAdapter.makefile</tt> uses <tt class="docutils literal">wsgiserver.CP_fileobject</tt> directly and uses
@@ -1110,7 +1110,7 @@ dealing or is willing to deal with an application at scale knows how to run
 <span class="caps">QA</span> image with complete CherryPy test suite containing all environments and dependencies so every
 contributor can take it and run the test suite against introduced changes effortlessly. Here&#8217;s
 a <em>dockerfile</em> for the&nbsp;purpose.</p>
-<div class="highlight"><pre>FROM ubuntu:trusty
+<div class="highlight"><pre><span></span>FROM ubuntu:trusty
 
 MAINTAINER CherryPy QA Team
 
@@ -1145,7 +1145,7 @@ it just as a <em>dockerfile</em>. Because of development dependencies it isn&#82
 I also made parallel Detox run possible, <tt class="docutils literal">parallel.sh</tt>, but I think usually running an
 environment at a time is better to stress tests with more concurrency. What&#8217;s really nice about it
 is that it can be run just like a&nbsp;binary.</p>
-<div class="highlight"><pre>docker run -it cherrypy/qa -e <span class="s2">&quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&quot;</span> <span class="se">\</span>
+<div class="highlight"><pre><span></span>docker run -it cherrypy/qa -e <span class="s2">&quot;py{26-co-ssl,27-nt,33-qa,34-nt-ssl}&quot;</span> <span class="se">\</span>
   -- -v cherrypy.test.test_http cherrypy.test.test_conn.TestLimitedRequestQueue
 </pre></div>
 <div class="section" id="side-project">
