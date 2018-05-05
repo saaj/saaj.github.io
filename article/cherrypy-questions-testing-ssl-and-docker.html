@@ -80,7 +80,7 @@ its range of&nbsp;application.</p>
 </div>
 <div class="section" id="testing">
 <h2><a class="toc-backref" href="#id123">Testing</a></h2>
-<p>As was discovered in <a class="reference external" href="http://recollection.saaj.me/article/future-of-cherrypy-bright-and-shiny.html">Future of CherryPy</a> quality
+<p>As was discovered in <a class="reference external" href="https://recollection.saaj.me/article/future-of-cherrypy-bright-and-shiny.html">Future of CherryPy</a> quality
 assurance was a glaring problem. After I volunteered and started working on putting
 tests back in the right way, I&#8217;ve discovered several testing methodological errors that were
 made along in years of CherryPy existence. Also, back in the day CherryPy had its own test
@@ -810,7 +810,7 @@ on Qualys <span class="caps">SSL</span> Server Test <a class="footnote-reference
 <li>pyOpenSSL&nbsp;0.14</li>
 <li>CherryPy from default branch (pre&nbsp;3.7)</li>
 </ul>
-<img alt="Qualys gives CherryPy on pyOpenSSL 0.14 A-" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py273-pyopenssl014-qualys.png" />
+<img alt="Qualys gives CherryPy on pyOpenSSL 0.14 A-" src="https://recollection.saaj.me/figure/cherrypy_questions_1/py273-pyopenssl014-qualys.png" />
 <p>There&#8217;s no error, but the&nbsp;warnings:</p>
 <ul class="simple">
 <li>Secure Client-Initiated Renegotiation &#8212; Supported, DoS <span class="caps">DANGER</span> <a class="footnote-reference" href="#id82" id="id19">[16]</a></li>
@@ -824,7 +824,7 @@ In cryptography, forward secrecy is a property of key-agreement protocols ensuri
 session key derived from a set of long-term keys cannot be compromised if one of the
 long-term keys is compromised in the future.</blockquote>
 <p>And here&#8217;s what can be squeezed out of built-in <tt class="docutils literal">ssl</tt>, which is&nbsp;grievous.</p>
-<img alt="Qualys gives CherryPy on Python 2.7.3's built-in SSL C" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py273-ssl-qualys.png" />
+<img alt="Qualys gives CherryPy on Python 2.7.3's built-in SSL C" src="https://recollection.saaj.me/figure/cherrypy_questions_1/py273-ssl-qualys.png" />
 <p>Here goes the what-is-wrong&nbsp;list:</p>
 <ul class="simple">
 <li><span class="caps">POODLE</span> (SSLv3) &#8212; Vulnerable, <span class="caps">INSECURE</span> <a class="footnote-reference" href="#id85" id="id23">[19]</a></li>
@@ -877,7 +877,7 @@ default. See <span class="caps">PEP</span> 476 <a class="footnote-reference" hre
 <span class="caps">POODLE</span>&nbsp;attack.</li>
 </ul>
 </blockquote>
-<img alt="Qualys gives CherryPy on Python 2.7.9's built-in SSL A-" src="http://recollection.saaj.me/figure/cherrypy_questions_1/py279-ssl-qualys.png" />
+<img alt="Qualys gives CherryPy on Python 2.7.9's built-in SSL A-" src="https://recollection.saaj.me/figure/cherrypy_questions_1/py279-ssl-qualys.png" />
 <p>All errors have gone, and in spite of the warning it supports <em>forward secrecy</em> for most
 clients. Here are just couple of warnings&nbsp;left:</p>
 <ul class="simple">
