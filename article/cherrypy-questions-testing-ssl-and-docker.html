@@ -982,16 +982,16 @@ there&#8217;re links to official command like client and protocol manual. It mak
 the same behaviour from the <span class="caps">API</span> as the normal tester <a class="footnote-reference" href="#id100" id="id41">[34]</a> has. If so it won&#8217;t work on bare <span class="caps">IP</span>
 address and on non 443&nbsp;port.</p>
 <p>To externalise this idea we have some prerequisite. If there&#8217;s real CherryPy instance running
-behind Nginx on cherrypy.org at WebFaction, then do we have access to it? Can we run several
+behind Nginx on cherrypy.dev at WebFaction, then do we have access to it? Can we run several
 additional instances there? If not, can we run them somewhere&nbsp;else?</p>
 <p>If think of instances for the following&nbsp;environments:</p>
 <ul class="simple">
-<li><em>py2-ssl-insecure.ssl.cherrypy.org</em> with Python &lt; 2.7.9 that will probably be stable version
+<li><em>py2-ssl-insecure.ssl.cherrypy.dev</em> with Python &lt; 2.7.9 that will probably be stable version
 in distos&#8217; repositories for quite some&nbsp;time</li>
-<li><em>py2-ssl-secure.ssl.cherrypy.org</em> with Python&nbsp;2.7.9+</li>
-<li><em>py2-pyopenssl-secure.ssl.cherrypy.org</em> with any <em>py2</em> with&nbsp;pyOpenSSL</li>
-<li><em>py3-ssl-secure.ssl.cherrypy.org</em> with Python&nbsp;3.4+</li>
-<li><em>py3-pyopenssl-secure.ssl.cherrypy.org</em> with any <em>py3</em> with pyOpenSSL once it&#8217;s&nbsp;available</li>
+<li><em>py2-ssl-secure.ssl.cherrypy.dev</em> with Python&nbsp;2.7.9+</li>
+<li><em>py2-pyopenssl-secure.ssl.cherrypy.dev</em> with any <em>py2</em> with&nbsp;pyOpenSSL</li>
+<li><em>py3-ssl-secure.ssl.cherrypy.dev</em> with Python&nbsp;3.4+</li>
+<li><em>py3-pyopenssl-secure.ssl.cherrypy.dev</em> with any <em>py3</em> with pyOpenSSL once it&#8217;s&nbsp;available</li>
 </ul>
 <p>Then we need to multiplex them to outer port 443 because likely it&#8217;ll be running on single
 server. Because Nginx doesn&#8217;t seem to be able passthrough upstream <span class="caps">SSL</span> connections <a class="footnote-reference" href="#id101" id="id42">[35]</a>
